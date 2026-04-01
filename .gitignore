@@ -1,0 +1,9 @@
+pdf_cache/
+__pycache__/
+*.pyc
+.feishu_sync_state.json
+*.pdf
+.DS_Store
+site/
+.mcp.json
+.claude/
