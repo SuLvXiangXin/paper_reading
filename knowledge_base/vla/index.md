@@ -5,15 +5,17 @@
 - **Transformer + Diffusion Head (Cross-embodiment GRP)**: 无VLM预训练，ViT transformer + diffusion head 从跨具身数据训练通用策略（Octo, RDT）→ **RDT2 升级为 VLM + Flow Head**（+Qwen2.5-VL-7B, +10K小时UMI数据, 三阶段渐进训练）
 - **VLM + Action Token**: 大视觉语言模型直接输出离散化动作 token（RT-2, OpenVLA）
 - **VLM + Diffusion/Flow Head**: VLM 提特征，扩散/flow 模型生成连续动作（π₀, π₀.5, Being-H0.5）
+- **Human Data Pretraining for VLA**: 用 egocentric 人类视频和手部追踪作为可扩展动作监督；从桌面灵巧操作（EgoVLA/EgoZero/EgoScale/UniDex）扩展到移动操作（EMMA）和人形 loco-manipulation（EgoHumanoid/Figure Go-Big）
 - **层次化 VLA (Hierarchical VLA)**: 统一模型同时做高层语义推理+低层动作生成（π₀.5, Hi Robot, **MEM**）
 - **VLM-as-Controller 系统框架 (Agentic Robotics)**: 现成VLM做高层元控制器，调度低层VLA策略；分离式层次化编排（SayCan, Inner Monologue, **RoboClaw**）
-- **世界模型 + VLA**: 预测未来状态再规划动作，三大流派：隐式(FLARE)、联合去噪(**Cosmos Policy**, **DreamZero**, UWM)、视频→IDM(UniPi, Seer)
+- **世界模型 + VLA**: 预测未来状态再规划动作，四类流派：隐式(FLARE)、联合去噪(**Cosmos Policy**, **DreamZero**, UWM)、视频→IDM(UniPi, Seer)、**World Model as Data Engine**（EmbodieDreamer/MimicDreamer/EgoDemoGen/GigaWorld-0/GigaBrain-0）以及 action-centered WAM（GigaWorld-Policy）
 - **交互式数据收集 (Interactive Data Collection)** 🆕: deploy-then-collect 范式，DAgger-inspired，人类仅在策略失败时介入修正；与模型设计正交，专注于数据收集效率（**RoboCopilot**, **GCENT/Genie Centurion**, **RaC**——显式recovery+correction配对+两条规则，10x数据效率+test-time scaling）
-- **VLA RL 后训练 (RL Post-training)** 🆕: 通过 RL 或 rejection sampling 对预训练 VLA 进行在线微调，解决 compounding error 和探索问题；价值函数路线（HIL-SERL, Q-Chunking, PA-RL）vs rejection sampling 路线（**Hi-ORS**）vs 离线 ACP 路线（**Evo-RL**）vs RL Token 路线（**RLT**——冻结 VLA 暴露紧凑表征 + 轻量 actor-critic + chunk-level RL，数小时真机超人类速度）
-- **轻量化 VLA (Lightweight VLA)** 🆕: 在保持性能的同时大幅减少参数量和计算开销，面向消费级 GPU 实时部署；代表: TinyVLA, SmolVLA, **Evo-1**（0.77B，无机器人预训练 Meta-World SOTA）
+- **VLA RL 后训练 (RL Post-training)** 🆕: 通过 RL 或 rejection sampling 对预训练 VLA 进行在线微调，解决 compounding error 和探索问题；价值函数路线（HIL-SERL, Q-Chunking, PA-RL）vs rejection sampling 路线（**Hi-ORS**）vs 离线 ACP 路线（**Evo-RL**）vs RL Token 路线（**RLT**）vs world-model/value 辅助路线（**GigaBrain-0.5M***, **ViVa**）vs flow step-wise critic-free 路线（**π-StepNFT**）
+- **轻量化 VLA (Lightweight VLA)** 🆕: 在保持性能的同时大幅减少参数量和计算开销，面向消费级 GPU 实时部署；代表: TinyVLA, SmolVLA, **Evo-1**（0.77B，无机器人预训练 Meta-World SOTA）、**SwiftVLA**（0.45B，训练期4D几何蒸馏，推理期移除重分支）
 - **VLA 3D 空间感知增强** 🆕: 在纯 RGB 输入下为 VLA 注入 3D 几何先验；显式方案（SpatialVLA, PointVLA，需 RGB-D）vs 隐式方案（**Evo-0**，VGGT + Cross-Attention，仅 RGB）
 - **冻结VLM + 分类式动作解码（Tripartite）** 🆕: 完全冻结大VLM作语义先验，分离出可训练Pons编译器 + 高频分类动作解码器（ParaCAT），两阶段特征缓存训练提速40%（**SaiVLA-0**，LIBERO 99.0% SOTA）
-- **奖励学习**: 从人类反馈或视频中学习奖励函数
+- **VLA Reasoning / RLVR** 🆕: 用可验证 reward 强化 affordance、几何关系和轨迹推理（**VLA-R1**），连接 chain-of-thought 与机器人动作对齐
+- **奖励/价值学习**: 从人类反馈或视频中学习奖励函数；**ViVa** 将视频生成模型改造成 value model 支持长时序机器人 RL
 
 → 详见 [methods/index.md](methods/index.md)
 
@@ -27,23 +29,26 @@
 - **跨具身泛化 (Cross-Embodiment)**: 单一模型/检查点控制多种形态的机器人（Being-H0.5 的核心场景）
 - **双臂操作 (Bimanual Manipulation)**: 需要双臂协调的高难度操作（Cosmos Policy 的 ALOHA、DreamZero 的 AgiBot G1 评测场景）
 - **部分可观测任务** 🆕: 物体被遮挡/自遮挡、需要记住物体位置等（MEM 的 Find Object、Unpack Groceries 等）
+- **人形机器人 Loco-Manipulation** 🆕: 全身移动、双臂操作和底层 whole-body control 耦合（EgoHumanoid, Figure Helix 02, Being-H0.7）
+- **Egocentric Hand Motion / Perception** 🆕: 手部运动重建、预测、生成和第一人称视频理解，为 human-data VLA 提供中间监督（HaWoR, Uni-Hand, MEgoHand, OpenMMEgo）
 
 → 详见 [tasks/index.md](tasks/index.md)
 
 ## 技术组件
 - **动作表示**: 离散 token / 连续向量 / action chunk / FAST tokenizer / 混合方案 / 混合连续flow+离散masked prediction（Being-H0.5）/ **latent frame injection**（Cosmos Policy：动作编码为 latent frame 插入视频 diffusion 序列）
 - **动作解码**: Diffusion (DDPM) / Flow Matching / MSE / Discrete Cross-entropy / **Latent Video Diffusion**（Cosmos Policy：动作直接在视频 diffusion 过程中去噪生成）/ **联合 flow matching velocity prediction**（DreamZero：视频+动作共享速度场预测）
-- **动作空间**: position control vs velocity control（Diffusion Policy）/ 零填充对齐（π₀）/ **统一物理语义槽位**（Being-H0.5，将人手MANO+30种机器人映射到共享空间）/ **relative joint positions**（DreamZero 默认）
-- **视觉编码器**: SigLIP, DINOv2, ViT, ViT-22B (PaLI-X), ViT-4B (PaLM-E), 浅层CNN patch encoder; SigLIP+DINOv2 融合（OpenVLA/Prismatic 验证有效）; **Wan2.1 Spatiotemporal VAE**（DreamZero + Cosmos Policy）; **视频编码器**（MEM：空间-时间分离注意力 ViT，16帧<300ms，不引入新参数）🆕
+- **动作空间**: position control vs velocity control（Diffusion Policy）/ 零填充对齐（π₀）/ **统一物理语义槽位**（Being-H0.5，将人手MANO+30种机器人映射到共享空间）/ **FAAS**（UniDex：82D function-actuator-aligned 灵巧手动作空间）/ **relative joint positions**（DreamZero 默认）
+- **视觉编码器**: SigLIP, DINOv2, ViT, ViT-22B (PaLI-X), ViT-4B (PaLM-E), 浅层CNN patch encoder; SigLIP+DINOv2 融合（OpenVLA/Prismatic 验证有效）; **Wan2.1 Spatiotemporal VAE**（DreamZero + Cosmos Policy）; **视频编码器**（MEM：空间-时间分离注意力 ViT，16帧<300ms，不引入新参数）; **4D geometry teacher**（SwiftVLA：训练期蒸馏、推理期移除）; **egocentric LMM perception**（OpenMMEgo）🆕
 - **语言编码器**: T5, Gemma, Gemma3-4B（MEM）🆕, Llama 2, UL2, PaLM, InternVL-3.5（Being-H0.5）, 冻结 vs 微调; **T5-XXL cross-attention**（Cosmos Policy，继承自 Cosmos-Predict2）; **Wan2.1 text encoder (冻结)**（DreamZero）; **InternVL 2.5-2B MLP 二值分类头**（GCENT Task Sentinel，步骤成功检测）🆕; **Qwen2.5-0.5B**（Evo-1，0.5B 高效语义理解）🆕
 - **注意力设计**: Block-wise causal mask, Readout token, MoT共享注意力+独立FFN, **chunk-wise autoregressive attention mask + teacher forcing**（DreamZero：当前chunk attend前序clean chunks）, **空间-时间分离注意力**（MEM：ViT每4层交替空间双向+时间因果注意力）🆕
 - **记忆机制** 🆕: 密集帧历史(Octo)、池化记忆(ContextVLA)、本体感知记忆(TA-VLA)、关键帧(BPP/MeMeR)、点轨迹(TraceVLA)、潜在记忆(Sam2Act)、语言记忆(OneTwoVLA)、**多尺度混合模态记忆**（MEM：短时视频+长时语言，15分钟）
-- **架构创新**: Mixture-of-Flow（MoF，Being-H0.5：共享基础层+路由特化专家）、流形保持门控（MPG）、通用异步分块（UAC）、**Latent Frame Injection + Conditioning Mask**（Cosmos Policy：无架构修改的多模态适配）、**闭环 KV Cache 替换**（DreamZero：用真实观测替换预测帧消除累积误差，WAM 独有优势）
-- **数据策略**: cross-embodiment, co-training/co-fine-tuning (RT-2首创), verbal instruction, augmentation, **人类中心学习**（Being-H0/H0.5: 人手运动作为物理母语）, **EAP自重置数据收集**（RoboClaw: 正-逆动作对实现自主数据循环采集）, **Rollout Experience Learning**（Cosmos Policy：从策略 rollout 数据微调世界模型和价值函数）, **多样性优先非重复数据 + 任务淘汰机制**（DreamZero：颠覆传统重复示教范式）, **人类干预修正数据**（MEM：失败→修正数据训练上下文适应）🆕, **倒带精修（Rewind-and-Refine）+ Task Sentinel 自动监控**（GCENT：关节状态缓冲倒带失效点 + 步骤成功检测，1:N 可扩展，数据效率提升 2.25x）🆕
+- **架构创新**: Mixture-of-Flow（MoF，Being-H0.5：共享基础层+路由特化专家）、流形保持门控（MPG）、通用异步分块（UAC）、**Latent Frame Injection + Conditioning Mask**（Cosmos Policy：无架构修改的多模态适配）、**闭环 KV Cache 替换**（DreamZero：用真实观测替换预测帧消除累积误差，WAM 独有优势）、**System 1/2/0 humanoid hierarchy**（Figure Helix：官方技术页）、**action-centered WAM**（GigaWorld-Policy）🆕
+- **数据策略**: cross-embodiment, co-training/co-fine-tuning (RT-2首创), verbal instruction, augmentation, **人类中心学习**（Being-H0/H0.5: 人手运动作为物理母语）, **Ego human data + anchor data**（EgoVerse/EgoScale/EMMA/EgoHumanoid：大规模多样ego数据需少量对齐锚点）, **World Model as Data Engine**（EmbodieDreamer/MimicDreamer/EgoDemoGen/GigaWorld-0：合成 paired video-action 数据）, **EAP自重置数据收集**（RoboClaw: 正-逆动作对实现自主数据循环采集）, **Rollout Experience Learning**（Cosmos Policy：从策略 rollout 数据微调世界模型和价值函数）, **多样性优先非重复数据 + 任务淘汰机制**（DreamZero：颠覆传统重复示教范式）, **人类干预修正数据**（MEM：失败→修正数据训练上下文适应）🆕, **倒带精修（Rewind-and-Refine）+ Task Sentinel 自动监控**（GCENT：关节状态缓冲倒带失效点 + 步骤成功检测，1:N 可扩展，数据效率提升 2.25x）🆕
 - **高效微调**: LoRA（OpenVLA 验证 rank=32 匹配全量微调）, 量化推理（4-bit 无损）, ESA（Being-H0.5: slot-wise adapter）
 - **推理加速**: DDIM（Diffusion Policy）、Euler 步数减少（π₀ 10步）、Consistency Models、多TPU云服务（RT-2）、**1-step denoising**（Cosmos Policy：1步去噪仅损失0.7%成功率）、**DreamZero-Flash**（解耦视频/动作噪声调度 + DiT Caching + CFG并行 + NVFP4量化 → 38x 加速实现 7Hz）
 - **输出约束**: 推理时限制解码词表仅采样有效动作 token（RT-2首创）
 - **规划方法**: **Best-of-N + World Model + Value Function**（Cosmos Policy：采样N动作→预测未来状态→选最高价值，ensemble + majority mean）
+- **价值/推理后训练**: **RAMP**（GigaBrain-0.5M*：future state/value 条件策略）, **video-generative value model**（ViVa）, **step-wise contrastive ranking**（π-StepNFT）, **RLVR/GRPO reasoning**（VLA-R1）
 - **系统接口**: MCP工具协议（RoboClaw: Start/Terminate/Switch Policy, Env Summary, Call Human）
 
 → 详见 [components/index.md](components/index.md)
@@ -62,6 +67,9 @@
 - **RoboArena 真机评测**（DreamZero 开源评测代码）
 - **长时记忆真机评测** 🆕：MEM 提出的记忆能力评测套件（Swap Mugs, Find Object, Unpack Groceries, Scoop Coffee, Grilled Cheese, Window Cleaning, Recipe Setup, Clean Kitchen）
 - **GCENT 真机任务套件** 🆕：Sandwich Assembly（8步双臂长时序）/ Connector Insertion（高精度接触丰富）/ Microwave-Heating（5种操作长时序）/ Typing（键盘打字指令跟随），专为数据收集范式评测设计
+- **Ego/Human-Data 评测** 🆕：EgoZero 7个Franka任务、EMMA mobile manipulation、EgoHumanoid G1 loco-manipulation、UniDex tool-use tasks、EgoVerse multi-lab co-training study
+- **GigaAI / World-Model Data Engine 评测** 🆕：PBench Robot Set、DreamGen Bench、GigaBrain-0 真机任务、RoboChallenge 30任务、GigaWorld-Policy RoboTwin 2.0
+- **官方技术页评测** 🆕：Figure Helix 系列主要是内部指标/公开视频，不应与公开可复现 benchmark 等同
 
 → 详见 [benchmarks/index.md](benchmarks/index.md)
 
@@ -80,13 +88,25 @@ Diffusion Policy (2023, DDPM用于BC策略, 单任务奠基)
         ├── π₀.5 (2025, 层次化+开放世界, 任务复杂度方向)
         │   ├── MEM/π₀.6-MEM (2025, +多尺度记忆, 视频编码器+语言记忆, 15分钟任务) 🆕
         │   └── RoboClaw (2026, 系统框架, VLM元控制器+EAP, 基于π₀.5)
-        └── Being-H0.5 (2026, 人类中心+统一动作空间+30具身, 跨具身泛化方向, 开源)
+        ├── Being-H0.5 (2026, 人类中心+统一动作空间+30具身, 跨具身泛化方向, 开源)
+        └── GigaBrain-0/0.5M* (2025-2026, world model data engine + RAMP RL 后训练)
+
+Human/Ego Video → Robot Policy (人类数据预训练路线)
+  EgoMimic (2024, AR眼镜ego数据co-training奠基)
+    → EgoVLA/EgoZero (2025, VLA预训练 / smart glasses robot-free policy)
+    → EMMA (2025, ego human data扩展到mobile manipulation)
+    → MimicDreamer/EgoDemoGen (2025, 人类示范转机器人监督 / 新视角示范生成)
+    → EgoHumanoid (2026, ego demos → humanoid loco-manipulation)
+    → UniDex/EgoVerse (2026, 灵巧手FAAS统一动作空间 / 全球ego数据集+anchor data结论)
 
 Video Model → Policy (视频预训练→机器人策略, 世界模型路线)
   Cosmos-Predict2 (NVIDIA, 视频生成基础模型)
     → Cosmos Policy (2026, latent frame injection, 统一policy+WM+value, LIBERO/RoboCasa/ALOHA SOTA)
   Wan2.1-I2V-14B (NVIDIA, 视频生成基础模型)
     → DreamZero (2026, 14B WAM, 自回归chunk-wise, 零样本泛化2x+, 跨具身video-only迁移, 7Hz实时)
+  GigaWorld 系列 (GigaAI, world model as data engine)
+    → EmbodieDreamer / GigaWorld-0 (2025, Real2Sim2Real + synthetic paired video-action data)
+    → GigaWorld-Policy (2026, action-centered WAM, 推理时action-only低延迟控制)
 
 VLM-as-Controller 系统演进线:
 SayCan (2022) → Inner Monologue (2022) → RoboClaw (2026, +全生命周期统一+EAP自重置)
@@ -105,10 +125,13 @@ SERL (2024, Q-function RL for robot)
   → Hi-ORS (2025, 拒绝采样完全替代Q函数, +reward-weighted flow matching全步骤监督, +HITL error recovery, 真机1.5h 80%)
   → Evo-RL (2026, 离线ACP：优势标签注入task text，LeRobot基础，完全开源真机RL)
   → RLT (2025, PI, RL Token紧凑表征+冻结VLA+轻量actor-critic+chunk-level RL, 数小时真机, 超人类速度, 涌现新策略)
+  → π-StepNFT (2026, critic-free/likelihood-free flow RL, step-wise contrastive ranking)
+  → GigaBrain-0.5M* / ViVa (2026, world model future state/value conditioning / video-generative value model)
 
 轻量化 VLA 方法线（新增）:
 TinyVLA (2024, 子10亿参数, 仍需机器人预训练) → SmolVLA (2025, 2.25B, Meta-World 68.2%)
   → Evo-1 (2025, 0.77B, InternVL3-1B+Cross-only DiT+两阶段语义保护, Meta-World 80.6% SOTA, 无机器人预训练)
+  → SwiftVLA (2025, 0.45B, 训练期4D时空几何蒸馏, 推理期轻量部署)
 
 冻结VLM + 分类动作解码方法线（新增）:
 SaiVLA-0 (2026.03, Synthoid.ai, 冻结VLM三元架构Cerebrum+Pons+ParaCAT, {-1,0,+1}分类动作, 两阶段特征缓存-40%训练时间, LIBERO 99.0% SOTA)

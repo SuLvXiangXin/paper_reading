@@ -19,6 +19,17 @@
 - **EMMA** (2025, Stanford) — Ego 人类数据 → 移动操作 scaling
 - **Being-H0/H0.5** (2025-2026, BeingBeyond) — 35K+ 小时 UniHand 数据，大规模 VLA 预训练
 - **EgoScale** (2026, NVIDIA) — 20K 小时 ego 视频，验证 scaling phenomenon
+- **EgoHumanoid** (2026) — ego human demos + 少量 G1 数据 → humanoid loco-manipulation
+- **UniDex** (2026) — ego 视频 retarget 到 8 种灵巧手，FAAS 统一动作空间
+- **EgoVerse** (2026) — 1,362 小时全球 ego human dataset，验证多样数据 + anchor data 的 co-training 规律
+
+## 相关基础设施工作 🆕
+这些工作本身不是完整 VLA policy，但决定 ego human data 能否转成高质量监督：
+- **HaWoR**：将 egocentric hand reconstruction 从 camera-frame 提升到 world-space，解决手离开视野和全局尺度问题
+- **Uni-Hand**：预测 wrist/finger/hand-object interaction state，可直接转为 ALOHA 末端轨迹和抓取时序
+- **MEgoHand**：用 VLM + depth + DiT flow 生成 egocentric hand-object MANO 运动，提供人手运动先验
+- **OpenMMEgo**：开放 ego video LMM 数据/模型/benchmark，补齐第一人称视频语义理解
+- **MimicDreamer / EgoDemoGen**：用视频生成和视角/动作迁移把人类 demo 转成机器人可用 paired observation-action 数据
 
 ## 关键技术组件
 
@@ -35,6 +46,8 @@
 2. **动作分布对齐**: 人手和机器人的运动范围/速度/精度不同 → Gaussian Z-score 归一化
 3. **视觉外观对齐**: 人手 vs 机器人臂外观差异大 → SAM 遮罩 + 结构化线条覆盖
 4. **时间对齐**: 人类操作速度约为机器人 4 倍 → 调整 action horizon 或降采样
+5. **视角与具身锚点**: EgoVerse/EgoScale/EMMA 显示，大规模多样 ego 数据通常还需要少量 domain-aligned human-robot anchor data 或目标机器人数据，把人类视角、尺度和动作接口锚定到 robot policy
+6. **功能-执行器动作对齐**: UniDex 的 FAAS 将不同灵巧手按功能部位和 actuator 对齐，是 Being-H0.5 全具身统一动作空间之外的灵巧手专用统一表示
 
 ### 架构设计
 - **共享编码器 + 域特定头**: 强制两个域学习共享表征
@@ -69,5 +82,7 @@ EgoMimic (2024): 人手数据 = 一等公民，统一 co-training（奠基）
   ↓
 EgoBridge/EgoVLA/EgoZero (2025): 扩展到 domain adaptation / VLA 预训练 / smart glasses
   ↓
-Being-H0.5 / EgoScale (2026): 万小时级 scaling，验证 transfer 是 scaling phenomenon
+EMMA/MimicDreamer/EgoDemoGen (2025): 扩展到 mobile manipulation / 生成式人-机示范对齐 / viewpoint augmentation
+  ↓
+Being-H0.5 / EgoScale / UniDex / EgoVerse (2026): 万小时级 scaling、统一动作空间、全球 ego 数据集，验证 transfer 是 scaling + alignment phenomenon
 ```

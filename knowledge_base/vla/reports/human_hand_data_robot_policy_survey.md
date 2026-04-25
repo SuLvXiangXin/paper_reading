@@ -1,7 +1,7 @@
 # 人手数据用于机器人 Policy 训练：全景调研
 
 > 基于 EgoScale + Being-H0/H0.5 + JALA + Emergence of H2R 多锚点引用图谱分析，覆盖 40+ 篇核心论文
-> 调研时间：2026-03-15（二次更新：多锚点深挖，补充 Phantom/DexCap/LAPA/EgoZero/DexImit 等 13 篇）
+> 调研时间：2026-03-15（二次更新：多锚点深挖，补充 Phantom/DexCap/LAPA/EgoZero/DexImit 等 13 篇；2026-04-25 三次更新：补充 EgoVLA/EMMA/EgoHumanoid/MimicDreamer/EgoDemoGen/UniDex/EgoVerse/hand-motion infrastructure 等）
 
 ## 1. 研究背景与核心问题
 
@@ -163,6 +163,20 @@ Mixture-of-Transformers VLA 预训练 →
 | **DexCap 数据** | Stanford | mocap demos | 手指级精度 | 灵巧操作 mocap |
 | **HOI4D** | — | 4D egocentric | 手-物交互分类标注 | 交互理解 |
 | **ARCTIC** | ETH | 双手操作 | 双手-物体 mesh | 灵巧双手操作 |
+
+### 2026-04-25 更新：Focused Ego/Figure/GigaAI 相关结论
+
+这次 focused list 的新增论文把“人手/ego 数据用于机器人”从桌面灵巧操作进一步扩展为四个子问题：
+
+| 子问题 | 代表工作 | 核心结论 |
+|--------|----------|----------|
+| **机器人策略直接预训练** | EgoVLA, EgoZero, EgoScale, UniDex | ego 视频可以成为动作监督，但不同工作对 robot data 需求差异很大：EgoZero 最激进地追求 robot-free，EgoVLA/EgoScale/UniDex 更强调 retargeting、mid-training 或少量 robot demos |
+| **移动/人形迁移** | EMMA, EgoHumanoid, Figure Project Go-Big | ego human data 不再局限桌面手部操作，可迁移到 mobile manipulation 和 humanoid loco-manipulation；但对齐机制从手腕/手指扩展到底盘、全身姿态和 whole-body controller |
+| **示范生成与视角增强** | MimicDreamer, EgoDemoGen | world model 可以把人类 ego demo 转成机器人可用 observation-action pair，或合成 novel-view demonstration，补足直接采集昂贵的视角/具身覆盖 |
+| **手部运动基础设施** | HaWoR, Uni-Hand, MEgoHand, OpenMMEgo | 数据前处理正从“检测手”升级为 world-space 轨迹重建、未来手-物交互预测、MANO 运动生成和 ego LMM 语义理解 |
+| **大规模数据集 scaling** | EgoVerse | 多样 ego data 有用，但需要少量 domain-aligned human-robot anchor data；scaling 不是简单堆未对齐人类视频 |
+
+**关键更新**：EgoVerse 已验证为 arXiv:2604.07607，而不是未解析占位项；它提供了 1,362 小时、80K episodes、1,965 tasks、240 scenes、2,087 demonstrators 的全球 ego human dataset，并用多实验室 co-training study 明确强调 anchor data 的必要性。
 
 ## 5. 技术路线对比
 

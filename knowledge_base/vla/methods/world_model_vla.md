@@ -4,13 +4,14 @@
 
 将 World Model 引入 VLA 是一条区别于传统「感知→动作」直接映射的方法路线。核心思想是：**先理解/预测世界动态，再据此生成动作**，使 VLA 具备「想象」和「规划」能力。
 
-这条路线根据 World Model 输出如何与动作生成衔接，分为三大流派：
+这条路线根据 World Model 输出如何与动作生成衔接，分为四类流派：
 
 ```
 World Model + VLA
 ├── 流派A: Hidden State → Action Expert     （隐式世界模型）
 ├── 流派B: 视频+动作联合去噪               （统一世界模型）
-└── 流派C: 先生成视频 → Inverse Dynamics    （显式世界模型 + IDM）
+├── 流派C: 先生成视频 → Inverse Dynamics    （显式世界模型 + IDM）
+└── 流派D: World Model as Data Engine        （合成数据引擎）
 ```
 
 ---
@@ -84,6 +85,7 @@ iVideoGPT (2024, autoregressive latent world model)
 | **UWM** | 2504.02792 | UW + Toyota | 2025.04 (RSS 2025) | ~65 | 核心创新：**解耦动作和图像的 diffusion timestep**。单一 transformer 联合建模 p(o,a,o')，推理时通过控制 timestep 灵活切换 policy/forward/inverse dynamics/video generator |
 | **PAD** | 2411.18179 | 清华 | 2024.11 (NeurIPS 2024) | — | DiT 架构融合所有模态输入，同时联合去噪 future image 和 action。验证了视觉预测和动作生成共享物理动力学 |
 | **Cosmos Policy** | 2601.16163 | NVIDIA + Stanford | 2026.01 | ~17 | **Latent frame injection**: 将 action/proprio/value 编码为 latent frames 注入预训练视频 diffusion 序列，无架构修改单阶段微调。**统一 policy+WM+value function**，通过 conditioning mask 切换功能。支持 best-of-N model-based planning。LIBERO 98.5%, RoboCasa 67.1% (50 demos) SOTA |
+| **GigaWorld-Policy** | 2603.17240 | GigaAI | 2026.03 | 新 | **Action-centered WAM**：训练时联合建模未来视觉动态与动作，推理时可关闭未来视频生成只解码动作。RoboTwin 2.0 0.86 SR，A100 约 360ms |
 | **CoVAR** | 2512.16023 | — | 2024.12 | — | Multi-Modal Diffusion 同时生成视频和动作。探索了共生成的 co-generation 范式 |
 | **AVID** | 2410.12822 | — | 2024.10 | — | 将 action conditioning 加入预训练视频扩散模型，Product of Experts 方式融合 action-conditioned 和 unconditional video score |
 | **GR-1** | — | ByteDance | 2024 (ICLR 2025) | ~275 | GPT 风格模型，预训练视频预测 + 微调动作生成。虽然非严格联合去噪，但开创了视频预训练→动作微调范式 |
@@ -127,17 +129,18 @@ RynnVLA-002 (2025, autoregressive unified)
 
 ### 流派B内技术路线对比 🆕
 
-| 维度 | Cosmos Policy | DreamZero | UWM | Video Policy |
-|------|--------------|-----------|-----|-------------|
-| **基座模型** | Cosmos-Predict2 2B | Wan2.1 14B | 从头训练 | 视频模型+独立action module |
-| **架构修改** | 无 | 无 | 自定义 | 需要独立action module |
-| **训练阶段** | 单阶段 | 单阶段 | 单阶段 | 多阶段 |
-| **世界模型** | ✅ (显式future state) | ✅ (视频预测) | ✅ (灵活切换) | ❌ |
-| **价值函数** | ✅ (统一) | ❌ | ❌ | ❌ |
-| **Planning** | ✅ (best-of-N) | ❌ | ❌ | ❌ |
-| **零样本泛化** | ❌ | ✅ | ❌ | ❌ |
-| **LIBERO** | 98.5% | — | — | 94.0% (Long) |
-| **RoboCasa** | 67.1% (50 demos) | — | 60.8% (1000 demos) | 66.0% (300 demos) |
+| 维度 | Cosmos Policy | DreamZero | GigaWorld-Policy | UWM | Video Policy |
+|------|--------------|-----------|------------------|-----|-------------|
+| **基座模型** | Cosmos-Predict2 2B | Wan2.1 14B | GigaWorld-Policy WAM | 从头训练 | 视频模型+独立action module |
+| **架构修改** | 无 | 无 | Action-centered decoder | 自定义 | 需要独立action module |
+| **训练阶段** | 单阶段 | 单阶段 | 单阶段 | 单阶段 | 多阶段 |
+| **世界模型** | ✅ (显式future state) | ✅ (视频预测) | ✅ (训练期未来视觉监督) | ✅ (灵活切换) | ❌ |
+| **价值函数** | ✅ (统一) | ❌ | ❌ | ❌ | ❌ |
+| **Planning** | ✅ (best-of-N) | ❌ | ❌ | ❌ | ❌ |
+| **零样本泛化** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **推理定位** | policy+WM+value，可规划 | WAM-as-policy，强调零样本 | 关闭视频生成的 action-only 低延迟控制 | 多功能联合模型 | 视频先验+动作模块 |
+| **LIBERO/RoboTwin** | LIBERO 98.5% | — | RoboTwin 2.0 0.86 SR | — | LIBERO-Long 94.0% |
+| **RoboCasa** | 67.1% (50 demos) | — | — | 60.8% (1000 demos) | 66.0% (300 demos) |
 
 ---
 
@@ -199,29 +202,53 @@ RoboDreamer (2024, 组合式长程规划)
 
 ---
 
-## 三大流派对比
+## 流派D：World Model as Data Engine（合成具身数据引擎）🆕
 
-| 维度 | 流派A: Hidden State | 流派B: 联合去噪 | 流派C: 视频→IDM |
-|------|-------------------|----------------|----------------|
-| **World Model 形式** | 隐式 latent | 统一 diffusion | 显式视频生成 |
-| **动作生成方式** | latent-conditioned policy | 与视频共同去噪 | Inverse Dynamics |
-| **推理效率** | 高 | 低（需去噪视频） | 中（需先生成再推理） |
-| **可解释性** | 低 | 中（可看视频输出） | 高（可看生成视频/子目标） |
-| **利用无动作数据** | 有限 | 天然支持 | 天然支持 |
-| **误差传播** | 端到端，不累积 | 端到端，不累积 | 两阶段累积 |
-| **代表最高引用** | DreamVLA (~74) | GR-1 (~275) | UniPi (~449) |
-| **最强性能** | GR00T N1.5 | **Cosmos Policy (LIBERO 98.5%, RoboCasa 67.1%)** 🆕 | Seer (CALVIN 4.28) |
-| **工业落地** | NVIDIA (GR00T) | NVIDIA (DreamZero, Cosmos Policy), ByteDance (GR) | AgiBot, 上海AI Lab |
+### 核心思路
+World model 不直接部署为 policy，而是在训练前或训练中生成高质量、配对的 embodied video-action 数据：改变外观、视角、具身、动作语义或仿真真实感，再用 IDM/3D planning/retargeting 产生动作标签。它解决的是 VLA 的数据覆盖问题，而不是推理时的动作解码问题。
+
+### 代表论文
+
+| 论文 | arXiv | 机构 | 时间 | 要点 |
+|------|-------|------|------|------|
+| **EmbodieDreamer** | 2507.05198 | GigaAI | 2025.07 | Real2Sim2Real 子系统，用 PhysAligner 对齐动力学、VisAligner 将低保真仿真渲染转为真实感视频，增强 ACT/π0 的 RL/IL 训练 |
+| **MimicDreamer** | 2509.22199 | GigaAI | 2025.09 | EgoStabilizer + IK + H2R Aligner，将 egocentric 人类示范转成机器人视频与动作监督 |
+| **EgoDemoGen** | 2509.22578 | GigaAI | 2025.09 | EgoTrajTransfer + EgoViewTransfer 生成新视角下配对 observation-action demonstration，提升 viewpoint robustness |
+| **GigaWorld-0** | 2511.19861 | GigaAI | 2025.11 | 把 world model 明确定位为数据引擎，统一 appearance/view/mimic/3D/physics/action synthesis，并产出 paired video-action 数据 |
+| **GigaBrain-0** | 2510.19430 | GigaAI | 2025.10 | 使用 GigaWorld 合成数据扩展 VLA 训练，结合 RGB-D 与 Embodied CoT，提升 G1/PiPER 真机泛化 |
+
+### 与 WAM-as-policy 的区别
+- **DreamZero/Cosmos Policy/GigaWorld-Policy**：world model 在推理时参与动作生成或规划，是 policy 组成部分
+- **GigaWorld-0/MimicDreamer/EgoDemoGen**：world model 在训练前生成数据，部署时仍是常规 VLA policy
+- **优势**：可复用现有 VLA 架构，不增加部署延迟；能集中补足少见视角、外观、具身和失败点
+- **局限**：数据质量依赖生成模型与 IDM/retargeting；合成数据可能引入物理或视觉 artifact
+
+---
+
+## 四类流派对比
+
+| 维度 | 流派A: Hidden State | 流派B: 联合去噪 | 流派C: 视频→IDM | 流派D: Data Engine |
+|------|-------------------|----------------|----------------|------------------|
+| **World Model 形式** | 隐式 latent | 统一 diffusion | 显式视频生成 | 合成数据生成器 |
+| **动作生成方式** | latent-conditioned policy | 与视频共同去噪 | Inverse Dynamics | 训练时生成/增强 paired data |
+| **推理效率** | 高 | 低到中（取决于是否 action-only） | 中（需先生成再推理） | 部署时无额外开销 |
+| **可解释性** | 低 | 中（可看视频输出） | 高（可看生成视频/子目标） | 高（可审查合成数据） |
+| **利用无动作数据** | 有限 | 天然支持 | 天然支持 | 天然支持，需再配动作合成 |
+| **误差传播** | 端到端，不累积 | 端到端，不累积 | 两阶段累积 | 训练数据 artifact 会被策略吸收 |
+| **代表最高引用** | DreamVLA (~74) | GR-1 (~275) | UniPi (~449) | GigaWorld-0（新） |
+| **最强性能** | GR00T N1.5 | **Cosmos Policy (LIBERO 98.5%, RoboCasa 67.1%)** 🆕 | Seer (CALVIN 4.28) | GigaBrain-0/GigaWorld 系列真机展示 |
+| **工业落地** | NVIDIA (GR00T) | NVIDIA (DreamZero, Cosmos Policy), GigaAI | AgiBot, 上海AI Lab | GigaAI |
 
 ## 发展趋势
 
 1. **流派融合**：越来越多工作融合多个流派。如 DreamVLA 预测 world knowledge（流派A思路）但用 inverse dynamics 出动作（流派C思路）；Cosmos Policy 是流派B但也可以做 planning（流派C功能）
 2. **从显式到隐式**：早期工作（UniPi, SuSIE）生成完整像素级视频/图像，新工作（FLARE, VPP, MinD）倾向使用 latent representation，更高效
-3. **规模化**：DreamZero 14B、Genie Envisioner 大规模平台，说明 World Model + VLA 在向大模型方向发展
+3. **规模化**：DreamZero 14B、Genie Envisioner 大规模平台、GigaWorld-0 数据引擎，说明 World Model + VLA 在向大模型和大数据工厂方向发展
 4. **利用互联网视频**：LAPA、GR-2、DeFI 等验证了大规模无动作视频对 VLA 预训练的价值
 5. **闭环化**：从 UniPi 的开环视频规划，到 Seer/F1 的端到端闭环 PIDM，再到 DreamZero 的 7Hz 实时控制，闭环实时性不断提升
-6. **统一化**：Cosmos Policy 展示了同一模型同时作为 policy+world model+value function 的可行性，模型功能边界持续扩展 🆕
+6. **统一化**：Cosmos Policy 展示了同一模型同时作为 policy+world model+value function 的可行性，GigaBrain-0.5M* 进一步把 future state/value 条件接入 RL 后训练，模型功能边界持续扩展 🆕
 7. **视频预训练 vs VLM 预训练之争**：Cosmos Policy 在低层控制场景超越 VLM-based VLA (π₀.5, OpenVLA-OFT+)，支持"时空动力学先验 > 静态语义先验"的假说，但 VLM 路线在语义泛化和开放世界上仍有优势 🆕
+8. **WAM-as-policy vs WAM-as-data-engine**：DreamZero/Cosmos Policy 直接用 world model 控制或规划，GigaWorld-0/EmbodieDreamer/MimicDreamer 则用 world model 扩展训练数据，两者分别优化部署能力和数据覆盖。
 
 ## 与现有 VLA 方法路线的关系
 
@@ -234,8 +261,9 @@ RoboDreamer (2024, 组合式长程规划)
 
 World Model + VLA (本调研):
 ├── 流派A: Hidden State → Action (FLARE, GR00T N1.5)
-├── 流派B: 联合去噪 (DreamZero, UWM, Cosmos Policy ← SOTA) 🆕
-└── 流派C: 视频→IDM (UniPi, Seer, DeFI)
+├── 流派B: 联合去噪 (DreamZero, UWM, Cosmos Policy ← SOTA, GigaWorld-Policy) 🆕
+├── 流派C: 视频→IDM (UniPi, Seer, DeFI)
+└── 流派D: Data Engine (EmbodieDreamer, MimicDreamer, EgoDemoGen, GigaWorld-0)
 ```
 
 World Model 路线是对传统「感知→动作」直接映射范式的升级：引入**对世界动态的建模**，使 VLA 从「反射式」升级为「规划式」。这与 Kahneman 的双系统理论呼应：传统 VLA 是 System 1（快速反射），World Model + VLA 引入了 System 2（深思熟虑）。

@@ -81,6 +81,28 @@ DreamZero 提出了与传统 VLA 截然不同的数据收集哲学——**多样
 - **关键洞察**：Scale 和 Alignment 可以且应该解耦——Stage I 提供多样性和语义基础，Stage II 提供具身精确对齐
 - **与 π₀ 的区别**：π₀ 的预训练数据是机器人数据（同域），EgoScale 的预训练数据是人类数据（跨域），因此需要额外的 mid-training 阶段来弥合具身差距
 
+### Ego human data 的新分化（2025-2026）
+近期工作把 ego human data 从桌面手部操作扩展到更宽的机器人任务族：
+- **桌面/灵巧操作**：EgoVLA 用 MANO/IK/retargeting 将人手视频预训练迁移到双臂灵巧手机器人；EgoZero 用 Project Aria smart glasses 的 3D point state-action 做 robot-free closed-loop policy；UniDex 从 ego 视频 retarget 出 8 种灵巧手的 robot-centric 数据，并提出 FAAS 统一动作空间。
+- **移动操作**：EMMA 用 navigation retargeting、manipulation coordinate alignment 和 phase-aware control，使 ego human data 能 co-train mobile manipulation policy，而不需要 mobile teleoperation 数据。
+- **人形 loco-manipulation**：EgoHumanoid 和 Figure Project Go-Big 将 ego human data 用到 whole-body 或 speech-to-nav 场景，但仍需要谨慎区分公开论文结果与官方技术页 claim。
+- **手部运动基础设施**：HaWoR（world-space reconstruction）、Uni-Hand（motion forecasting）、MEgoHand（motion generation）、OpenMMEgo（ego video LMM）补齐从原始 ego video 到动作监督/语义理解的前处理栈。
+
+### EgoVerse 的 anchor data 结论（2026）
+EgoVerse 将 ego 数据扩展到 1,362 小时、80K episodes、1,965 tasks、240 scenes、2,087 demonstrators 的多实验室协作数据集。它的重要经验不是“ego 数据越多越自动有效”，而是：
+- 多样 ego data 能提升 robot policy 的泛化，但直接混入未对齐人类数据不稳定
+- 少量 domain-aligned human-robot anchor data 可以把大规模 ego 数据锚定到目标机器人感知/动作空间
+- demonstrator 和 scene diversity 是主要 scaling 维度，和传统每任务重复示教的数据哲学不同
+
+### World Model as Data Engine（2025-2026）
+GigaAI 系列把 world model 用作 VLA 数据工厂，而非只在推理时做 policy：
+- **EmbodieDreamer**：PhysAligner 对齐仿真动力学，VisAligner 将低保真仿真渲染转为真实感视频，服务 Real2Sim2Real policy 训练
+- **MimicDreamer**：EgoStabilizer + IK + H2R Aligner，将人类 egocentric demo 转成机器人视频与动作监督
+- **EgoDemoGen**：EgoTrajTransfer + EgoViewTransfer 生成新视角下配对 observation-action demonstration，专门补 viewpoint robustness
+- **GigaWorld-0**：统一 appearance/view/mimic/3D/physics/action synthesis，用 IDM/3D planning 产出 paired video-action 数据，驱动 GigaBrain-0 训练
+
+这条路线的价值是部署时不增加推理成本，风险是生成 artifact、物理不一致或 IDM/retargeting 误差会被策略吸收，因此需要数据筛选和真机闭环验证。
+
 ### π₀.5 的配方（2025，进一步发展）
 将co-training扩展到5类异构数据源，远超传统VLM数据保留：
 1. **MM（移动操作数据）**：目标平台的直接经验
