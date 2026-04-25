@@ -25,6 +25,16 @@
 | **SaiVLA-0** | **2026** | **冻结VLM + 分类式动作解码（Tripartite Architecture）** | **神经科学启发三元架构：冻结大VLM（Cerebrum）低频提供多层语义先验，Pons Adapter编译为执行token，ParaCAT（Cerebellum）高频输出{-1,0,+1}三元分类动作并行K步解码，两阶段特征缓存训练（-40%时间），固定比率调度（N=5,K=20），注视式几何ROI，LIBERO 99.0% SOTA** | **[saivla0_2026.md](saivla0_2026.md)** |
 | **RLT** | **2025** | **VLA RL 后训练（RL Token + 轻量 Actor-Critic）** | **冻结 VLA（π0.6）上训练 encoder-decoder transformer 暴露紧凑 "RL Token" 表征，作为轻量 actor-critic 的状态接口 + BC 正则化 + chunk-level RL，数小时真机在线 RL 即可提升关键阶段速度 3× 并超越人类遥操作速度，Ethernet 任务中位完成步数 66 vs 遥操作 146** | **[rlt_2025.md](rlt_2025.md)** |
 | **RDT2** | **2025** | **VLM + Flow Head（跨具身泛化方向，UMI 数据 Scaling）** | **基于 Qwen2.5-VL-7B 的 7.4B 机器人基础模型，增强版 UMI 硬件采集 10,000+ 小时具身无关数据（100+场景/3000+物体），三阶段渐进训练（RVQ 离散化对齐语言-动作→Flow Matching 连续精度→单步蒸馏实时推理），首次实现"4U"零样本泛化（Unseen embodiment/scene/object/instruction），乒乓球/射箭等动态任务~100ms 反应** | **[rdt2_2025.md](rdt2_2025.md)** |
+| **VITRA** | **2025** | **Human Data Pretraining + 野外视频 V-L-A 自动构造** | **将 Ego4D/EPIC/EgoExo4D/SSV2 的无标注真实人类活动视频自动转成 1M atomic hand-action V-L-A episodes（3D 手/相机运动 + 速度极小值切分 + trajectory-overlay GPT caption），预训练 PaliGemma-2 + diffusion action expert 后在 Realman+XHand 真机上达到 71.0% seen / 64.6% unseen 成功率，显著优于 π0 和 OXE pretrain** | **[vitra_2025.md](vitra_2025.md)** |
+| RISE | 2026 | World Model RL / VLA Self-Improvement | 用 controllable dynamics model + progress value model 在 imagination rollout 中产生 advantage，对 π0.5 类策略做离线自提升；世界模型只用于训练，部署仍是普通 VLA | [rise_2026.md](rise_2026.md) |
+| χ0 / kai0 | 2026 | VLA 部署分布对齐 / 长时序衣物操作 | 将长时序衣物操作失败归因到 demonstration、policy bias、deployment trajectory 分布不一致，用 model arithmetic、stage advantage 和 train-deploy alignment 在有限资源下提升 π0.5 可靠性 | [kai0_2026.md](kai0_2026.md) |
+| MM-Hand | 2026 | 灵巧手硬件 / 多模态触觉平台 | 开源 21-DoF 模块化灵巧手，集成远程绳驱、in-palm stereo vision 和可拆卸触觉指尖，为人手数据到灵巧机器人策略提供可复制执行端 | [mm_hand_2026.md](mm_hand_2026.md) |
+| TAMEn | 2026 | 触觉感知闭环数据收集 | 跨夹爪 wearable interface + mocap/VR 双模式采集 + feasibility checking + tactile recovery teleoperation，把接触丰富任务数据收集做成闭环数据飞轮 | [tamen_2026.md](tamen_2026.md) |
+| GO-1-Pro | 2025 | 机器人数据多样性 Scaling | 系统拆解 task / embodiment / expert diversity 对大规模 manipulation 预训练的作用，指出 task diversity 最关键、expert diversity 可能造成 velocity ambiguity，并用 distribution debiasing 提升数据效率 | [go1_pro_2025.md](go1_pro_2025.md) |
+| FreeTacMan | 2025 | Robot-free 视觉-触觉数据采集 | 用低成本手持夹爪和 GelSight 风格触觉传感器采集接触丰富任务数据，再训练视觉-触觉 diffusion policy 迁移到真实机器人 | [freetacman_2025.md](freetacman_2025.md) |
+| UniVLA | 2025 | Task-centric Latent Action | 用无动作视频学习 task-centric latent action token，将 action-free video、跨具身机器人数据和导航数据统一到潜动作空间；下游只需轻量 action decoder 适配目标机器人 | [univla_2025.md](univla_2025.md) |
+| AgiBot World Colosseo | 2025 | 大规模机器人数据与评测平台 | 真实机器人操作数据、统一 schema 和 Colosseo benchmark 组成平台化数据基础设施，推动 VLA 从单实验室 demo 走向持续数据运营 | [agibot_world_colosseo_2025.md](agibot_world_colosseo_2025.md) |
+| Self-Directed Learning | 2025 | VLA 观点论文 / 自导学习 | 指出仅靠 BC/VLA scaling 会遇到平台期，提出 goal identification、skill acquisition、monitoring/evaluation 的 self-directed learning 研究议程 | [self_directed_learning_2025.md](self_directed_learning_2025.md) |
 | EgoVLA | 2025 | Human Data Pretraining for VLA | 用带手腕/手姿态标注的 egocentric 人类视频预训练 VLM-action 模型，再用少量 humanoid robot demos 后训练，通过 MANO 统一动作空间、IK 和 retargeting 迁移到双臂灵巧手机器人；证明 human-video pretraining 能显著提升机器人后训练效果，但不是 robot-free zero-shot policy | [egovla_2025.md](egovla_2025.md) |
 | EgoZero | 2025 | Robot-free egocentric imitation learning | 用 Project Aria smart glasses 采集 in-the-wild 人类示范，把视觉和手部动作压缩成 egocentric 3D point state-action，在 7 个 Franka 任务上用每任务约 20 分钟人类数据、无机器人训练数据达到约 70% zero-shot 成功率 | [egozero_2025.md](egozero_2025.md) |
 | EMMA | 2025 | Human Data Pretraining + Mobile Manipulation | 将 egocentric human data 从桌面扩展到移动操作，通过 navigation retargeting、manipulation coordinate alignment 和 phase-aware control，与静态机器人操作数据 co-train，在无需 mobile teleoperation 数据下接近或超过 Mobile ALOHA 风格遥操作基线 | [emma_2025.md](emma_2025.md) |
@@ -52,6 +62,9 @@
 | Figure Scaling Helix Logistics | 2025 | 官方技术页 / Data Scaling + Memory | Helix 物流路线 follow-up：示教数据从约 10 小时扩到 60 小时，并加入 vision memory、state history、force feedback 和更大 S1 decoder；仍属于内部物流评测而非公开 benchmark | [figure_scaling_helix_logistics_2025.md](figure_scaling_helix_logistics_2025.md) |
 | Figure Project Go-Big | 2025 | 官方技术页 / Human Ego Pretraining | Figure 面向 humanoid 的人类 egocentric 视频预训练计划，报告 Helix 仅用人类第一视角视频训练即可 zero-shot 输出机器人 SE(2) 导航控制、执行 speech-to-nav，但缺少公开数据规模和 benchmark | [figure_project_go_big_2025.md](figure_project_go_big_2025.md) |
 | Figure Helix 02 | 2026 | 官方技术页 / Full-body Humanoid VLA | 将 S1/S2 Helix 扩展到全身 loco-manipulation，新增 1kHz System 0 学习式全身控制器，S1 变为 all sensors in / all joints out 的 200Hz 全身 visuomotor policy；仍是官方视频 release | [figure_helix_02_2026.md](figure_helix_02_2026.md) |
+| RoboDual | 2024 | 双系统 VLA / Generalist + Specialist | 用 OpenVLA 类慢速 generalist 提供语义和粗动作计划，小型 diffusion specialist 高频输出连续动作，改善泛化、精度和控制频率 | [robodual_2024.md](robodual_2024.md) |
+| CLOVER | 2024 | 生成式视觉计划 + 闭环控制 | 视频 diffusion 生成 RGB-D 子目标，反馈策略用当前-目标 embedding error 做动作、子目标切换和 replanning，把 open-loop visual planning 改成闭环控制 | [clover_2024.md](clover_2024.md) |
+| MPI | 2024 | 操作交互表征预训练 | 用 Ego4D hand-object interaction 学习预测交互过程帧和交互物体位置，获得更适合机器人 manipulation 的视觉表征 | [mpi_2024.md](mpi_2024.md) |
 
 ## 时间线
 ```

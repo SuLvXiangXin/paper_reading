@@ -7,9 +7,14 @@
 
 ## 灵巧手 (Dexterous)
 多指机械手的精细操作，难度远高于平行夹爪。
-- 代表工作：π₀ 的灵巧手实验, DexCap, EgoScale, UniDex
-- 新趋势：egocentric human hand data 正在从表征/retargeting 转向直接预训练灵巧手 VLA；UniDex 的 FAAS 和 Being-H0.5 的统一动作空间是两条动作空间对齐路线
+- 代表工作：π₀ 的灵巧手实验, DexCap, VITRA, EgoScale, UniDex, MM-Hand
+- 新趋势：egocentric human hand data 正在从表征/retargeting 转向直接预训练灵巧手 VLA；VITRA 证明无标注真实人类活动视频可自动转成显式 3D hand-action V-L-A 预训练数据，UniDex 的 FAAS 和 Being-H0.5 的统一动作空间则是两条动作空间对齐路线；MM-Hand/TAMEn/FreeTacMan 则把触觉和可复制硬件纳入数据闭环
 → 详见 [dexterous.md](dexterous.md)
+
+## 接触丰富操作 (Contact-Rich Manipulation) 🆕
+需要稳定接触、滑移感知、插入/对齐或柔性物体交互的任务。
+- 代表工作：FreeTacMan（robot-free 视觉触觉数据）、TAMEn（触觉感知闭环数据采集）、χ0/kai0（长时序衣物操作可靠性）
+- 挑战：纯视觉难以判断接触状态；失败往往来自微小偏差累积；需要触觉、恢复数据和 train-deploy alignment
 
 ## 导航 (Navigation)
 移动机器人到目标位置，通常结合视觉和语言指令。

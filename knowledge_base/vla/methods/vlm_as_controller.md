@@ -58,6 +58,13 @@ RoboClaw (2026) — VLM元控制器统一数据收集+策略学习+执行
 - **闭环学习**：部署轨迹回流训练，失败经验转化为恢复策略
 → 详见 [papers/roboclaw_2026.md](../papers/roboclaw_2026.md)
 
+### RoboDual (2024, OpenDriveLab)
+- **OpenVLA 类 generalist** 提供语义理解、语言泛化和粗动作计划
+- **小型 diffusion specialist** 高频输出连续 action chunk，可接入 depth/tactile/proprioception 等多模态观测
+- 通过 generalist latent/action token 条件化 specialist，缓解大 VLA 低频推理和离散动作精度问题
+- 严格说它不是 VLM 工具控制器，而是 generalist/specialist 双系统策略架构
+→ 详见 [papers/robodual_2024.md](../papers/robodual_2024.md)
+
 ## 关键设计要素
 1. **高层推理机制**：ICL/CoT/规划/代码生成
 2. **低层策略接口**：MCP工具调用 / API / 技能库

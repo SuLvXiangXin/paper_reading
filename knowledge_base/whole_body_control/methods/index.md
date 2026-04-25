@@ -49,6 +49,8 @@
 | KungfuBot | 2506.12851 | 高动态武术动作 | 56 |
 | HITTER | 2508.21043 | 乒乓球机器人，分层规划 | 29 |
 | HuB | 2505.07294 | 极端平衡控制 | 37 |
+| SMASH | 2604.01158 | onboard egocentric perception + 全身击球 matching | — |
+| AMS | 2511.17373 | 异构 MoCap + 合成平衡数据统一敏捷与稳定 | — |
 
 ## 流派 E：Loco-Manipulation（移动操作）
 > 核心思想：腿部移动 + 手臂操作的全身协同
@@ -61,6 +63,7 @@
 | ResMimic | 2510.05070 | 运动跟踪→全身Loco-Manipulation | 25 |
 | AMO | 2505.03738 | 高度灵巧全身控制 | 66 |
 | HDMI | 2509.16757 | 从人类视频学交互式WBC | 27 |
+| EgoHumanoid | 2602.10106 | 人类 ego 示范 + 少量机器人数据迁移到 G1 loco-manipulation | — |
 
 ## 流派 F：表达性全身控制（Expressive WBC）
 > 核心思想：模仿人类表情/舞蹈等非功能性动作
@@ -89,4 +92,5 @@
 | LangWBC | 2504.21738 | 端到端语言引导WBC | 26 |
 | FRoM-W1 | 2601.12799 | 语言指令通用WBC | 3 |
 | WholeBodyVLA | 2512.11047 | 统一VLA for Loco-Manipulation | 13 |
+| EgoHumanoid | 2602.10106 | human ego data co-training for humanoid VLA | — |
 | SENTINEL | 2511.19236 | 端到端语言动作模型全身控制 | 2 |

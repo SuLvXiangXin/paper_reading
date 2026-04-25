@@ -49,3 +49,4 @@
 | VLN-R1 (Qi et al.) | 2025 | 43 | 强化微调 | [vln_r1_2025](vln_r1_2025.md) |
 | JanusVLN (Zeng et al.) | 2025 | 41 | 双隐式记忆 | [janusvln_2025](janusvln_2025.md) |
 | MapNav (Zhang et al.) | 2025 | 44 | 语义地图记忆 | [mapnav_2025](mapnav_2025.md) |
+| SparseVideoNav / MM-VideoNav | 2026 | — | 视频生成式 beyond-the-view VLN | [sparse_video_nav_2026](sparse_video_nav_2026.md) |

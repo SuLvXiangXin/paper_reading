@@ -25,7 +25,8 @@
 - **StreamVLN**：流式处理视觉输入，SlowFast 上下文建模，实时推理
 - **DualVLN**：System 2（VLM 全局规划）+ System 1（DiT 局部执行），首个双系统 VLN 基础模型
 - **VLN-R1**：强化微调（GRPO），DeepSeek-R1 思路引入 VLN
-- 代表工作：StreamVLN, DualVLN, NavDP, VLN-R1, JanusVLN
+- **SparseVideoNav / MM-VideoNav**：用 sparse video generation 生成 20s future foresight，首次把视频生成模型引入真实 beyond-the-view VLN
+- 代表工作：StreamVLN, DualVLN, NavDP, VLN-R1, JanusVLN, SparseVideoNav
 
 ## 方法流派
 
@@ -33,6 +34,7 @@
 |------|---------|---------|--------|
 | **A. 拓扑图 + Transformer** | 构建拓扑图/地图表征，Transformer 做全局-局部推理 | DUET(231), ETPNav(171), GridMM(125), BEVBert(125) | 高 |
 | **B. 视频流 VLM** | 将导航视为视频理解问题，VLM 直接从视频流推理下一步 | NaVid(198), Uni-NaVid(93), StreamVLN(52) | 中高 |
+| **B2. 视频生成式未来扩展** | 生成当前视野外 sparse future，为 real-world beyond-the-view navigation 提供长程想象 | SparseVideoNav/MM-VideoNav | 新兴 |
 | **C. LLM 推理驱动** | 利用 LLM/VLM 的推理能力做显式规划 | NavGPT(328), NavGPT-2(88), InstructNav(123) | 高 |
 | **D. 导航基础模型** | 跨机器人、跨场景的通用导航策略 | GNM(214), ViNT(277), NoMaD(290), NaVILA(143) | 高 |
 | **E. 双系统/层级式** | 高层规划 + 低层执行的分离架构 | DualVLN(10), NavDP(35), Hi Robot(147) | 新兴 |

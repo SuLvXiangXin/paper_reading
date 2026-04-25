@@ -30,7 +30,7 @@ Latent Action 方法线
 | 论文 | 年份 | 机构 | 核心特点 |
 |------|------|------|----------|
 | **LAPA** | 2024 | MSR+UW | 开山之作，VQ-VAE IDM + pixel reconstruction FDM |
-| **UniVLA** | 2024 | — | 重建式 latent action + 大规模机器人数据联合预训练 |
+| **UniVLA** | 2025 | OpenDriveLab+AgiBot | task-centric latent action + action-free video/机器人/导航数据联合预训练 |
 | **IGOR** | 2024 | — | Image-goal representations 作为 atomic control units |
 | **Video2Skill** | 2024 | — | 视频到技能的 latent action 提取 |
 
@@ -110,7 +110,7 @@ MCP: h → predict action tokens（有标签时）
 Video Pretraining (VPT, 2022) → Inverse Dynamics 思想
     ↓
 LAPA (2024, 重建式 latent action, IDM + FDM + VQ-VAE)
-    ├── UniVLA (2024, +机器人数据, 大规模)
+    ├── UniVLA (2025, task-centric latent action, +action-free video/机器人/导航数据)
     └── IGOR (2024, image-goal 表征)
     
     ←对比→

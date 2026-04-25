@@ -54,6 +54,7 @@
 - **EMMA mobile manipulation tasks**：Table Service、Handover Wine、Grocery Shopping、Push Chair，每设置 50 trials，强调 mobile base + manipulation 的 human-data co-training
 - **EgoHumanoid G1 tasks**：Pillow Placement、Trash Disposal、Toy Transfer、Cart Stowing，验证 ego human demos 对 humanoid loco-manipulation 的迁移
 - **UniDex tool-use tasks**：Make Coffee、Sweep Objects、Water Flowers、Cut Bags、Use Mouse，评估异构灵巧手统一动作空间和 ego-video pretraining
+- **VITRA human-hand/robot dexterous tasks**：human hand action prediction benchmark（47 个 grasping 环境 + 117 个 general action 环境）作为下游 proxy；Realman + 12-DoF XHand 真机任务覆盖 pick-place、functional grasp、pour、sweep，并区分 seen object/background、unseen object/background、unseen category/background
 
 ### Egocentric Perception / Hand Motion Benchmarks 🆕
 - **Uni-Hand**：EgoPAT3D-DT、H2O-PT、HOT3D-Clips、CABH/CABH-E，以及 Hand-ALOHA-Transfer 下游验证
@@ -72,6 +73,12 @@
   - SO-101（便携臂）
   - 涵盖单臂、灵巧手、半人形、全人形等形态
   - 首次展示单一检查点跨具身 zero-shot 迁移信号
+
+### OpenDriveLab / AgiBot 数据与触觉评测 🆕
+- **AgiBot World Colosseo**：大规模真实机器人 manipulation 数据和评测平台，强调统一 schema、持续数据运营和 scalable embodied systems
+- **GO-1-Pro scaling study**：围绕 task/embodiment/expert diversity 的机器人数据 scaling 评测，关注数据组合与 distribution debiasing
+- **FreeTacMan / TAMEn contact-rich tasks**：视觉-触觉接触丰富任务评测，关注 robot-free/handheld 数据、触觉融合、可回放性和 HITL recovery data
+- **MM-Hand benchmark**：21-DoF 灵巧手硬件能力评测，覆盖多指抓取、旋拧、工具使用和多模态触觉采集
 
 ### GigaAI / World-Model Data Engine 评测 🆕
 - **GigaWorld-0**：PBench Robot Set、DreamGen Bench，重点评估 embodied video/action data generation 质量，而非直接 policy benchmark

@@ -9,6 +9,10 @@
 | 33 | 2511.07820 | sonic_2025.md | SONIC：运动跟踪Scaling，WBC基础模型 |
 | 113 | 2410.21229 | hover_2024.md | HOVER：多模式策略蒸馏，通用WBC |
 | 119 | 2508.08241 | beyondmimic_2025.md | BeyondMimic：扩散引导，零样本泛化 |
+| — | 2604.01158 | smash_2026.md | SMASH：onboard ego 感知 + 全身击球 matching 的 humanoid 乒乓 |
+| — | 2512.11047 | wholebodyvla_2025.md | WholeBodyVLA：latent VLA + LMO RL 的大空间人形移动操作 |
+| — | 2511.17373 | agility_meets_stability_2025.md | AMS：异构 MoCap + 合成平衡数据统一敏捷与稳定控制 |
+| — | 2602.10106 | egohumanoid_2026.md | EgoHumanoid：人类 ego 示范迁移到 humanoid loco-manipulation 的数据层路线 |
 
 ## 重要论文清单（待建卡片）
 

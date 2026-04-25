@@ -51,6 +51,7 @@
 | **Being-H0** | 2025 | — | BeingBeyond | 大规模人类视频预训练 VLA，引入 UniHand 数据集，支持夹爪到灵巧手 |
 | **Being-H0.5** | 2026 | 6 | BeingBeyond | 引入 UniHand-2.0（35K+ 小时），Mixture-of-Transformers，跨具身泛化 |
 | **JALA** | 2026 | — | — | Joint-Aligned Latent Action，人手视频预训练 VLA，生成逼真手部运动 |
+| **VITRA** | 2025 | 18 | MSRA/Tsinghua | 无标注真实人类活动视频 → 自动 3D hand-action V-L-A episode 构造 |
 | **EgoMimic** | 2024 | 119 | Georgia Tech | AR 眼镜采集 ego 视频 + 3D 手部追踪，human-robot co-training |
 | **EgoDex** | 2025 | 71 | Apple | 大规模 ego 视频数据集 + benchmark，开源 |
 | **EgoVLA** | 2025 | 52 | NVIDIA | 人手运动预训练 VLA → IK + retargeting 迁移到机器人 |
@@ -65,6 +66,7 @@
 **关键技术**：
 - **手部追踪**：Apple Vision Pro / Meta Quest / AR 眼镜 → 3D hand pose；HaWoR 提供世界坐标系手部运动重建
 - **动作提取**：wrist 6-DoF trajectory + finger joint angles；JALA 通过 joint-aligned latent action 编码
+- **无标注视频 V-L-A 化**：VITRA 用 world-space wrist speed minima 切分 atomic actions，并用 trajectory-overlay GPT caption 生成动作指令
 - **Co-training**：将人类数据和少量机器人数据混合训练
 - **大规模数据集**：Being-H0.5 引入 UniHand-2.0（35K+ 小时），是目前最大规模的人手操作数据
 
@@ -158,6 +160,7 @@ Mixture-of-Transformers VLA 预训练 →
 | **Open X-Embodiment** | Google+ | 百万轨迹 | 多机器人 | foundation model |
 | **MotionTrans** | VR 设备 | 开源 | 6-DoF motion | motion-level 学习 |
 | **UniHand / UniHand-2.0** | Being-H0/H0.5 | 35K+ 小时 | 3D hand pose + wrist trajectory | VLA 预训练（目前最大规模人手数据集） |
+| **VITRA Hand V-L-A** | Ego4D/EPIC/EgoExo4D/SSV2 | 1M episodes / 26M frames | 自动 3D hand/camera motion + GPT action instruction | 无标注真实活动视频 → VLA 预训练 |
 | **Uni-Hand** | IRMVLab | 多数据集 | hand motion forecasting | ego 手部运动预测 → robot policy transfer |
 | **Nymeria** | Meta | 大规模多模态 | ego 日常运动 | 野外全身运动采集 |
 | **DexCap 数据** | Stanford | mocap demos | 手指级精度 | 灵巧操作 mocap |
@@ -170,7 +173,7 @@ Mixture-of-Transformers VLA 预训练 →
 
 | 子问题 | 代表工作 | 核心结论 |
 |--------|----------|----------|
-| **机器人策略直接预训练** | EgoVLA, EgoZero, EgoScale, UniDex | ego 视频可以成为动作监督，但不同工作对 robot data 需求差异很大：EgoZero 最激进地追求 robot-free，EgoVLA/EgoScale/UniDex 更强调 retargeting、mid-training 或少量 robot demos |
+| **机器人策略直接预训练** | EgoVLA, EgoZero, VITRA, EgoScale, UniDex | ego 视频可以成为动作监督，但不同工作对 robot data 需求差异很大：EgoZero 最激进地追求 robot-free，VITRA 强调无标注野外视频自动 V-L-A 化，EgoVLA/EgoScale/UniDex 更强调 retargeting、mid-training 或少量 robot demos |
 | **移动/人形迁移** | EMMA, EgoHumanoid, Figure Project Go-Big | ego human data 不再局限桌面手部操作，可迁移到 mobile manipulation 和 humanoid loco-manipulation；但对齐机制从手腕/手指扩展到底盘、全身姿态和 whole-body controller |
 | **示范生成与视角增强** | MimicDreamer, EgoDemoGen | world model 可以把人类 ego demo 转成机器人可用 observation-action pair，或合成 novel-view demonstration，补足直接采集昂贵的视角/具身覆盖 |
 | **手部运动基础设施** | HaWoR, Uni-Hand, MEgoHand, OpenMMEgo | 数据前处理正从“检测手”升级为 world-space 轨迹重建、未来手-物交互预测、MANO 运动生成和 ego LMM 语义理解 |
@@ -184,7 +187,7 @@ Mixture-of-Transformers VLA 预训练 →
 
 | 数据源 | 规模 | 成本 | 标注质量 | 代表工作 |
 |--------|------|------|----------|----------|
-| **Ego 视频（被动采集）** | ★★★★★ | ★ | ★★（需手部追踪） | EgoScale, EgoDex, Being-H0/H0.5, R3M |
+| **Ego 视频（被动采集）** | ★★★★★ | ★ | ★★（需手部追踪/自动重建） | EgoScale, VITRA, EgoDex, Being-H0/H0.5, R3M |
 | **AR/VR 设备采集** | ★★★ | ★★ | ★★★★（自带追踪） | EgoMimic, MotionTrans |
 | **遥操作采集** | ★★ | ★★★★ | ★★★★★ | HOMIE, DexUMI |
 | **In-the-wild 抓取** | ★★★★ | ★★ | ★★★ | DexWild |
@@ -339,7 +342,7 @@ graph TD
 
 ---
 
-*本报告基于 EgoScale + Being-H0/H0.5 + JALA + Emergence of H2R 多锚点引用图谱分析生成，覆盖 40+ 篇核心论文*
+*本报告基于 EgoScale + Being-H0/H0.5 + JALA + VITRA + Emergence of H2R 多锚点引用图谱分析生成，覆盖 40+ 篇核心论文*
 
 ## 附录：论文速查表
 
@@ -349,6 +352,7 @@ graph TD
 | **Being-H0** | Vision-Language-Action Pretraining from Large-Scale Human Videos | 2507.15597 | 2025 | 人类视频 VLA 预训练 + UniHand |
 | **Being-H0.5** | Scaling Human-Centric Robot Learning for Cross-Embodiment Generalization | 2601.12993 | 2026 | UniHand-2.0（35K+ 小时）+ MoT 架构 |
 | **JALA** | Joint-Aligned Latent Action: Towards Scalable VLA Pretraining in the Wild | 2602.21736 | 2026 | Joint-aligned latent action 编码人手运动 |
+| **VITRA** | Scalable Vision-Language-Action Model Pretraining for Robotic Manipulation with Real-Life Human Activity Videos | 2510.21571 | 2025 | 无标注真实人类活动视频 → 1M hand V-L-A episodes |
 | **HaWoR** | World-Space Hand Motion Reconstruction from Egocentric Videos | 2501.02973 | 2025 | 世界坐标系 3D 手部运动重建（CVPR 2025） |
 | **UniHand 2.0** | （Being-H0.5 的数据集组件） | — | 2026 | 35K+ 小时人手操作数据，目前最大 |
 | **Uni-Hand** | Universal Hand Motion Forecasting in Egocentric Views | 2511.12878 | 2025 | ego 手部运动预测 + robot policy transfer |

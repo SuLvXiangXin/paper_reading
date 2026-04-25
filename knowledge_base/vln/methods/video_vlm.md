@@ -24,7 +24,11 @@
 ### StreamVLN (Wei et al., 2025) — 52 引用
 SlowFast 双通道上下文建模：Fast 滑窗做实时响应，Slow 压缩历史做长程记忆。3D-aware token pruning。
 
+### SparseVideoNav / MM-VideoNav (Zhang et al., 2026)
+首次把视频生成模型引入真实 beyond-the-view VLN。基于 Wan2.1 T2V 改造为历史条件 I2V，生成稀疏未来帧（覆盖 20s horizon），再用生成未来指导连续动作。它不是单纯“看历史视频做下一步”，而是显式想象当前视野外的可行路径。
+
 ## 发展趋势
 - 从离线处理 → 流式实时（StreamVLN）
 - 从单任务 → 多任务统一（Uni-NaVid）
-- 下一步：与双系统结合（DualVLN = VLM + DiT）
+- 从视频理解 → 视频生成式未来扩展（SparseVideoNav）
+- 下一步：与双系统结合（DualVLN = VLM + DiT）并压缩生成式未来模型的延迟

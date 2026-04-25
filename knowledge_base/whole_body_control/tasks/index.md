@@ -16,14 +16,16 @@
 - 跑酷（parkour）：Humanoid Parkour Learning (2406.10759)
 - 武术动作（空中翻转/旋踢）：BeyondMimic (2508.08241)
 - 功夫/武术：KungfuBot (2506.12851)
-- 乒乓球：HITTER (2508.21043)
+- 乒乓球：HITTER (2508.21043), SMASH (2604.01158)
 - 稀疏踩踏点行走：BeamDojo (2502.10363)
+- 敏捷与极端平衡统一：Agility Meets Stability (2511.17373)
 
 ### 移动操作（Loco-Manipulation）
 - 边走边抓取/放置物体
 - 序贯接触任务：WoCoCo (2406.06005)
 - 力控制操作：FALCON (2505.06776)
 - 视频模仿操作：OKAMI (2410.11792)
+- 人类 ego 示范迁移：EgoHumanoid (2602.10106)
 
 ### 表达性动作
 - 舞蹈/全身姿态模仿：Exbody, ExBody2
@@ -31,4 +33,4 @@
 
 ### 语言/VLA 指令任务
 - 语言引导全身运动：LangWBC (2504.21738)
-- VLA + 全身控制：WholeBodyVLA (2512.11047)
+- VLA + 全身控制：WholeBodyVLA (2512.11047), EgoHumanoid (2602.10106)
