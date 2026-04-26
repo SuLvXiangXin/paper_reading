@@ -73,6 +73,7 @@
   - SO-101（便携臂）
   - 涵盖单臂、灵巧手、半人形、全人形等形态
   - 首次展示单一检查点跨具身 zero-shot 迁移信号
+- **Being-H0.7**：3 个真实机器人平台（PND Adam-U、Unitree G1、Franka FR3 + Linkerbot O6 手）上的 12 个任务/5 个能力套件，强调动态目标、物理推理、动作复杂度、长时序和泛化；官方报告五个 suite 均领先 H0.5、π0.5 和 Fast-WAM
 
 ### OpenDriveLab / AgiBot 数据与触觉评测 🆕
 - **AgiBot World Colosseo**：大规模真实机器人 manipulation 数据和评测平台，强调统一 schema、持续数据运营和 scalable embodied systems
@@ -90,6 +91,7 @@
 
 ### 官方技术页 / 非公开 Benchmark 🆕
 - **Figure Helix 系列**：Helix、Helix Logistics、Scaling Helix Logistics、Project Go-Big、Helix 02 均以官方视频或内部指标为主；可记录为技术路线信号，但不要与 LIBERO/RoboCasa/ALOHA 等可复现 benchmark 等同
+- **Being-0 humanoid agent**：Unitree H1-2 + Inspire hands 办公环境长时序任务和 navigation/manipulation ablation，主要验证 Connector/skill system 的工程有效性，不宜与端到端 VLA benchmark 横向比较
 - **典型内部指标**：物流 normalized effective throughput、移动输送带包裹秒/件、条码朝向扫描成功率、公开视频任务长度与动作数
 
 ### Open-world 真机评测
@@ -106,3 +108,4 @@
 | Open-world 家庭 | π₀.5 | 60-90% 进度 | 2025 | |
 | RoboTwin 2.0 | GigaWorld-Policy | 0.86 simulation SR | 2026.03 | Action-centered WAM，50 任务 |
 | RoboChallenge | GigaBrain-0.5M* | 51.67% avg SR | 2026.02 | World model-conditioned RL 后训练 |
+| Being-H0.7 official suite | Being-H0.7 | Dynamic 70.0 / Physical 66.9 / Long Horizon 66.7 | 2026.04 | 官方 PDF；真实平台自建 suite，需第三方复现 |

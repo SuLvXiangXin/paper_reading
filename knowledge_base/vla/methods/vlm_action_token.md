@@ -9,6 +9,7 @@
 | **RT-2** | **2023** | **12B/55B** | **PaLI-X / PaLM-E** | ❌ | **首个 VLA，定义了"动作即语言"范式，提出 co-fine-tuning 策略，证明 VLM 预训练知识可迁移到机器人控制** |
 | RT-2-X | 2023 | 55B | PaLI-X | ❌ | RT-2 + Open X-Embodiment 数据，co-train with Internet data |
 | **OpenVLA** | 2024 | 7B | Prismatic (SigLIP+DINOv2+Llama2) | ✅ | 首个开源通用 VLA，7B 超越 55B RT-2-X |
+| **Being-H0** | **2025** | **1B-14B** | **InternVL3** | ✅ | **将人手 MANO motion token 作为 physical instruction tuning 目标，再用 action queries/MLP 后训练到机器人末端和灵巧手关节，是 Being-H 人类中心 VLA 的起点** |
 | RFM-1 | 2024 | 未公开 | 未公开 | ❌ | Covariant 的闭源 VLA |
 
 ## 技术要点
@@ -23,6 +24,7 @@
 - **RT-2-PaLI-X**: 直接使用数字 token（PaLI-X 对 0-1000 每个整数有独立 token）
 - **RT-2-PaLM-E**: 覆盖 256 个最低频 token 作为动作词表（一种 symbol tuning）
 - OpenVLA: 覆盖 Llama tokenizer 中最不常用的 256 个 token
+- Being-H0: 覆盖的是人手 motion token 而非机器人低层动作 bin；用 part-level GRQ 分别量化手腕和手指 MANO motion，再在机器人后训练阶段接 action queries/MLP 输出连续控制量
 
 ### 输入/输出格式
 - **RT-2 定义的 VQA 格式**: `"Q: what action should the robot take to [task instruction]? A:"` → 输出动作 token 字符串
@@ -80,6 +82,10 @@ RT-2 (2023.07, 首创VLA概念, 闭源, 12B-55B)
   │     └── OpenVLA (2024.06, 开源替代, 7B超越55B RT-2-X)
   └── 暴露的局限（离散化精度、无action chunking）
         └── 推动 VLM + Flow Head 方法线（π₀, 2024.10）的出现
+
+Human motion token 分支:
+Being-H0 (2025, MANO motion token physical instruction tuning)
+  └── Being-H0.5 (2026, 统一动作空间 + flow matching + 跨具身)
 ```
 
 ## 关键经验

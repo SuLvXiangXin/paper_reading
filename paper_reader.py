@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Paper Reader Agent — 论文速读工具
 
-使用 Claude API + Tool Use 实现渐进式论文分析。
+使用本地 Codex CLI 实现渐进式论文分析。
 自动加载领域知识库，生成结构化论文卡片，并更新知识库。
 
 Usage:
@@ -23,7 +23,8 @@ from pathlib import Path
 
 import fitz  # PyMuPDF
 import requests
-import anthropic
+
+from codex_runner import run_codex_cli
 
 # ─── Git Push（自动同步到 GitHub Pages） ─────────────────────────────────────
 
@@ -60,85 +61,13 @@ PDF_CACHE_DIR = BASE_DIR / "pdf_cache"
 
 DEFAULT_DOMAIN = "vla"
 
-MODEL = os.environ.get("PAPER_READER_MODEL", "claude-sonnet-4-6")
-MAX_TOKENS = 8192
-MAX_TOOL_ROUNDS = 15
+CODEX_MODEL = os.environ.get("PAPER_READER_CODEX_MODEL", "")
+CODEX_TIMEOUT_SECONDS = int(os.environ.get("PAPER_READER_CODEX_TIMEOUT_SECONDS", "900"))
 
 
 def get_domain_dir(domain: str = None) -> Path:
     """获取领域知识库目录。"""
     return KB_DIR / (domain or DEFAULT_DOMAIN)
-
-
-# ─── 工具定义 ────────────────────────────────────────────────────────────────
-
-TOOLS = [
-    {
-        "name": "read_knowledge",
-        "description": "读取知识库中的某个文件。用于了解领域背景、已有方法分类、已分析的论文等。"
-                       "可用路径示例: index.md, methods/index.md, methods/vlm_diffusion_head.md, "
-                       "papers/index.md, papers/pi0_2024.md, components/action_repr.md, "
-                       "reports/index.md 等。"
-                       "建议: 先读 index.md 了解全貌，再按需读子文件。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "知识库内的相对路径，如 'index.md' 或 'methods/vlm_diffusion_head.md'"
-                }
-            },
-            "required": ["path"]
-        }
-    },
-    {
-        "name": "update_knowledge",
-        "description": "更新或创建知识库中的文件。用于: "
-                       "1) 创建新的论文卡片 (papers/xxx.md), "
-                       "2) 更新方法分类 (methods/xxx.md), "
-                       "3) 更新论文清单 (papers/index.md), "
-                       "4) 创建/更新调研报告 (reports/xxx.md), "
-                       "5) 更新其他知识文件。"
-                       "注意: 更新已有文件时，保留原有内容并追加/修改，不要覆盖。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "知识库内的相对路径"
-                },
-                "content": {
-                    "type": "string",
-                    "description": "文件的完整内容 (Markdown 格式)"
-                }
-            },
-            "required": ["path", "content"]
-        }
-    },
-    {
-        "name": "search_papers",
-        "description": "在已有论文卡片中搜索关键词。返回匹配的论文卡片内容。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "搜索关键词，如 'diffusion policy' 或 'action chunking'"
-                }
-            },
-            "required": ["query"]
-        }
-    },
-    {
-        "name": "list_knowledge",
-        "description": "列出知识库的目录结构，查看有哪些文件可以读取。",
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
-    }
-]
 
 # ─── System Prompt ───────────────────────────────────────────────────────────
 
@@ -146,10 +75,10 @@ SYSTEM_PROMPT = """\
 你是一个机器人学习领域的论文分析专家，专注于 VLA (Vision-Language-Action) 方向。
 
 你的工作流程:
-1. 收到一篇论文后，先用 read_knowledge 读取 index.md 了解领域知识全貌
+1. 收到一篇论文后，先读取当前领域目录的 index.md 了解领域知识全貌
 2. 根据论文内容，加载相关的知识子文件（如 methods/xxx.md）
 3. 在领域上下文中分析论文，生成结构化卡片
-4. 用 update_knowledge 将论文卡片写入 papers/ 目录
+4. 将论文卡片写入 papers/ 目录
 5. 更新 papers/index.md 论文清单
 6. 如果论文引入了新概念/方法，更新对应的知识文件
 
@@ -198,10 +127,10 @@ REPORT_SYSTEM_PROMPT = """\
 围绕一个具体调研问题撰写深度调研报告。
 
 你的工作流程:
-1. 先用 read_knowledge 读取 index.md 了解领域知识全貌
-2. 用 list_knowledge 查看知识库中有哪些论文和知识文件
+1. 先读取当前领域目录的 index.md 了解领域知识全貌
+2. 查看知识库中有哪些论文和知识文件
 3. 根据调研主题，读取所有相关的论文卡片和方法分类文件
-4. 综合分析后，用 update_knowledge 将调研报告写入 reports/ 目录
+4. 综合分析后，将调研报告写入 reports/ 目录
 5. 更新 reports/index.md 报告清单
 
 调研报告格式:
@@ -232,80 +161,6 @@ REPORT_SYSTEM_PROMPT = """\
 - 如果知识库中信息不足以回答某个方面，明确指出
 - 用数据和事实说话，引用论文中的具体实验结果
 """
-
-# ─── 工具执行 ────────────────────────────────────────────────────────────────
-
-# 当前活跃的领域目录（在 run_agent 调用前设置）
-_active_domain_dir: Path = None
-
-
-def execute_tool(name: str, input_data: dict) -> str:
-    """执行工具调用，返回结果字符串。"""
-    if name == "read_knowledge":
-        if "path" not in input_data:
-            return "错误: read_knowledge 需要 'path' 参数。"
-        return _read_knowledge(input_data["path"])
-    elif name == "update_knowledge":
-        if "path" not in input_data or "content" not in input_data:
-            return "错误: update_knowledge 需要 'path' 和 'content' 参数。请重新调用并提供完整参数。"
-        return _update_knowledge(input_data["path"], input_data["content"])
-    elif name == "search_papers":
-        if "query" not in input_data:
-            return "错误: search_papers 需要 'query' 参数。"
-        return _search_papers(input_data["query"])
-    elif name == "list_knowledge":
-        return _list_knowledge()
-    else:
-        return f"未知工具: {name}"
-
-
-def _read_knowledge(path: str) -> str:
-    filepath = _active_domain_dir / path
-    if not filepath.exists():
-        return f"文件不存在: {path}\n可用文件:\n{_list_knowledge()}"
-    try:
-        content = filepath.read_text(encoding="utf-8")
-        return content if content.strip() else f"文件为空: {path}"
-    except Exception as e:
-        return f"读取失败: {e}"
-
-
-def _update_knowledge(path: str, content: str) -> str:
-    filepath = _active_domain_dir / path
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        filepath.write_text(content, encoding="utf-8")
-        return f"已更新: {path} ({len(content)} 字符)"
-    except Exception as e:
-        return f"写入失败: {e}"
-
-
-def _search_papers(query: str) -> str:
-    papers_dir = _active_domain_dir / "papers"
-    results = []
-    query_lower = query.lower()
-    if not papers_dir.exists():
-        return f"论文目录不存在: {papers_dir.relative_to(KB_DIR)}"
-    for md_file in papers_dir.glob("*.md"):
-        if md_file.name == "index.md":
-            continue
-        content = md_file.read_text(encoding="utf-8")
-        if query_lower in content.lower():
-            # 返回前 500 字符作为摘要
-            results.append(f"### {md_file.name}\n{content[:500]}...\n")
-    if not results:
-        return f"未找到匹配 '{query}' 的论文卡片"
-    return "\n".join(results)
-
-
-def _list_knowledge() -> str:
-    lines = []
-    for p in sorted(_active_domain_dir.rglob("*.md")):
-        rel = p.relative_to(_active_domain_dir)
-        size = len(p.read_text(encoding="utf-8"))
-        lines.append(f"  {rel} ({size} 字符)")
-    return "知识库文件:\n" + "\n".join(lines)
-
 
 # ─── PDF 处理 ────────────────────────────────────────────────────────────────
 
@@ -762,91 +617,60 @@ def update_reports_index(report_name: str, topic: str, domain: str = None):
 
 # ─── Agent 核心循环 ──────────────────────────────────────────────────────────
 
-def run_agent(user_message: str, paper_text: str = None,
-              system_prompt: str = None, domain: str = None) -> str:
-    """运行 Agent，返回最终回复。"""
-    global _active_domain_dir
-    _active_domain_dir = get_domain_dir(domain)
-    _active_domain_dir.mkdir(parents=True, exist_ok=True)
+def run_agent(
+    user_message: str,
+    paper_text: str = None,
+    system_prompt: str = None,
+    domain: str = None,
+    allow_write: bool = True,
+) -> str:
+    """运行本地 Codex CLI Agent，返回最终回复。"""
+    domain_dir = get_domain_dir(domain)
+    domain_dir.mkdir(parents=True, exist_ok=True)
 
-    client = anthropic.Anthropic()  # 从环境变量读取 API key 和 base URL
-
-    messages = []
-
-    # 如果有论文文本，作为第一条消息提供
-    if paper_text:
-        messages.append({
-            "role": "user",
-            "content": f"请分析以下论文，生成论文卡片并更新知识库。\n\n"
-                       f"<paper>\n{paper_text}\n</paper>\n\n"
-                       f"{user_message}"
-        })
-    else:
-        messages.append({
-            "role": "user",
-            "content": user_message
-        })
-
-    final_text = ""
     active_system_prompt = system_prompt or SYSTEM_PROMPT
+    domain_name = domain or DEFAULT_DOMAIN
+    domain_rel = f"knowledge_base/{domain_name}"
+    mode_rule = (
+        f"你可以修改 `{domain_rel}/` 下的 Markdown 文件来完成任务；不要修改该领域目录以外的文件。"
+        if allow_write
+        else "这是只读问答任务。不要修改任何文件，只基于知识库回答。"
+    )
 
-    for round_num in range(MAX_TOOL_ROUNDS):
-        print(f"  [Round {round_num + 1}] 调用模型...")
-
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=active_system_prompt,
-            tools=TOOLS,
-            messages=messages
+    if paper_text:
+        task = (
+            "请分析以下论文，生成论文卡片并更新知识库。\n\n"
+            f"<paper>\n{paper_text}\n</paper>\n\n"
+            f"{user_message}"
         )
+    else:
+        task = user_message
 
-        # 处理响应 — 将 pydantic 对象转为 dict 以避免序列化问题
-        assistant_content = response.content
-        assistant_content_dicts = []
-        tool_calls = []
-        text_blocks = []
-        for block in assistant_content:
-            if block.type == "tool_use":
-                assistant_content_dicts.append({
-                    "type": "tool_use",
-                    "id": block.id,
-                    "name": block.name,
-                    "input": block.input
-                })
-                tool_calls.append(block)
-            elif block.type == "text":
-                assistant_content_dicts.append({
-                    "type": "text",
-                    "text": block.text
-                })
-                text_blocks.append(block)
+    prompt = f"""{active_system_prompt}
 
-        messages.append({"role": "assistant", "content": assistant_content_dicts})
+当前领域目录: `{domain_rel}/`
+{mode_rule}
 
-        # 收集文本输出
-        for tb in text_blocks:
-            final_text += tb.text + "\n"
+执行要求:
+- 先阅读 `{domain_rel}/index.md`，再按需读取 methods/components/tasks/benchmarks/papers/reports。
+- 写入 Markdown 时保持现有相对链接和表格风格，避免无关格式 churn。
+- 最终回复简短说明已读取/更新的关键文件；如果是只读任务，只回答问题。
 
-        if not tool_calls:
-            # 没有工具调用，Agent 完成
-            print(f"  [完成] 共 {round_num + 1} 轮")
-            break
+用户任务:
+{task}
+"""
 
-        # 执行工具调用
-        tool_results = []
-        for tc in tool_calls:
-            print(f"    → {tc.name}({json.dumps(tc.input, ensure_ascii=False)[:80]})")
-            result = execute_tool(tc.name, tc.input)
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tc.id,
-                "content": result
-            })
-
-        messages.append({"role": "user", "content": tool_results})
-
-    return final_text.strip()
+    print("  调用本地 Codex CLI...")
+    sandbox = "workspace-write" if allow_write else "read-only"
+    result = run_codex_cli(
+        prompt,
+        cwd=BASE_DIR,
+        sandbox=sandbox,
+        model=CODEX_MODEL or None,
+        timeout=CODEX_TIMEOUT_SECONDS,
+    )
+    print("  [完成] Codex CLI 返回")
+    return result.strip()
 
 
 # ─── 命令行接口 ──────────────────────────────────────────────────────────────
@@ -901,7 +725,7 @@ def cmd_batch(directory: str, domain: str = None, no_sync: bool = False):
 def cmd_ask(question: str, domain: str = None):
     """基于知识库回答问题。"""
     print(f"\n问题: {question}\n")
-    result = run_agent(f"请基于知识库回答以下问题:\n\n{question}", domain=domain)
+    result = run_agent(f"请基于知识库回答以下问题:\n\n{question}", domain=domain, allow_write=False)
     print(f"\n回答:\n{result}")
     return result
 

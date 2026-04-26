@@ -1,12 +1,12 @@
 # VLM-as-Controller 系统框架（Agentic Robotics Framework）
 
 ## 核心思想
-使用现成的VLM/LLM作为高层元控制器，调度低层VLA策略执行具体操作。与"层次化VLA"（π₀.5, Hi Robot等模型内统一高低层）不同，这是一种**分离式外部编排**方案：高层推理由通用VLM负责，低层控制由独立的VLA策略负责。
+使用现成的VLM/LLM作为高层元控制器，调度低层VLA策略或技能库执行具体操作。与"层次化VLA"（π₀.5, Hi Robot等模型内统一高低层）不同，这是一种**分离式外部编排**方案：高层推理由通用VLM负责，低层控制由独立的VLA策略、RL控制器或模仿学习技能负责。
 
 ## 与层次化VLA的对比
 | 维度 | 模型内层次化 (π₀.5, Hi Robot) | 系统级层次化 / VLM-as-Controller (SayCan, RoboClaw) |
 |------|-------------------------------|------------------------------------------------------|
-| 模型 | 同一模型做高层+低层 | VLM做高层 + 独立VLA做低层 |
+| 模型 | 同一模型做高层+低层 | VLM做高层 + 独立VLA/技能库做低层 |
 | 知识共享 | 通过共享权重实现 | 通过上下文（prompt/memory）传递 |
 | 训练 | 联合训练 | 分别训练 |
 | 部署 | 单一模型 | 需要维护VLM + 多个VLA策略 |
@@ -28,6 +28,9 @@ LITEN (2025) — +推理时affordance学习
 HAMSTER (2025) — 层次化子任务抽象+plan-verify
 Agentic Robot (2025) — brain-inspired VLA框架
 
+Humanoid skill agent:
+Being-0 (2025) — 云端 FM + onboard VLM Connector + RL/ACT modular skills
+
 系统级全生命周期:
 RoboClaw (2026) — VLM元控制器统一数据收集+策略学习+执行
   - 新增：EAP自重置数据收集
@@ -47,6 +50,13 @@ RoboClaw (2026) — VLM元控制器统一数据收集+策略学习+执行
 - LLM规划 + 环境反馈（成功检测、场景描述、人类反馈）
 - 通过反馈触发重规划
 - 首次引入执行时的闭环反馈
+
+### Being-0 (2025, BeingBeyond)
+- **云端 Foundation Model** 做低频任务理解、任务分解、自反思和下一技能选择
+- **Onboard VLM Connector** 做目标 grounding、技能选择、导航站位调整和成功检测，约 1s 推理，避免云端 FM 直接闭环控制
+- **Modular Skill Library**：仿真 RL locomotion skill + Apple VisionPro 遥操作数据训练的 ACT manipulation skill，最终输出 PD target joint positions
+- **系统意义**：把 humanoid 长时序任务中的 planner-to-skill interface 做成可部署模块，说明高层 VLM 和低层控制之间需要一个中频 grounded connector
+→ 详见 [papers/being_0_2025.md](../papers/being_0_2025.md)
 
 ### RoboClaw (2026, AgiBot/NUS/SJTU)
 - **VLM元控制器** + π₀.5低层VLA

@@ -8,7 +8,7 @@
 
 ```
 World Model + VLA
-├── 流派A: Hidden State → Action Expert     （隐式世界模型）
+├── 流派A: Hidden State / Latent Query → Action Expert（隐式/latent 世界模型）
 ├── 流派B: 视频+动作联合去噪               （统一世界模型）
 ├── 流派C: 先生成视频 → Inverse Dynamics    （显式世界模型 + IDM）
 └── 流派D: World Model as Data Engine        （合成数据引擎）
@@ -16,7 +16,7 @@ World Model + VLA
 
 ---
 
-## 流派A：Hidden State → Action Expert（隐式世界模型）
+## 流派A：Hidden State / Latent Query → Action Expert（隐式/latent 世界模型）
 
 ### 核心思路
 用 World Model 的**隐状态/latent representation** 来指导动作生成，不需要显式生成视频帧。World Model 在 latent space 中预测未来状态，这些 latent 表征直接作为 action decoder 的条件输入。
@@ -35,6 +35,7 @@ World Model + VLA
 | 论文 | arXiv | 机构 | 时间 | 引用 | 要点 |
 |------|-------|------|------|------|------|
 | **FLARE** | 2505.15659 | NVIDIA GEAR | 2025.05 | ~37 | 在 VLA 的 DiT 中加入 "future tokens"，通过 cosine similarity loss 对齐未来观测的 latent embedding。简单有效，+26% 性能提升 |
+| **Being-H0.7** | 官方 PDF | BeingBeyond | 2026.04 | 新 | Latent WAM：prior branch 只看当前上下文，posterior branch 训练时看未来观测；用 latent hidden-state alignment 把未来信息注入可部署 latent queries，推理时不做像素 rollout |
 | **GR00T N1.5** | — | NVIDIA GEAR | 2025 | — | 在 GR00T N1 基础上加入 FLARE 对齐机制，使人形机器人策略具备隐式前瞻能力，支持从人类视频学习 |
 | **Genie Envisioner** | 2508.05635 | AgiBot | 2025.08 | 新 | GE-Base 大规模 world model 编码时空语义结构，GE-Act 利用 world model hidden state 生成动作。统一平台同时支持策略学习和评估 |
 | **MinD** | — | — | 2025 | — | 用 world model 的单步 latent 预测来 condition diffusion policy，避免生成完整视频帧，验证了 compact latent 足以驱动精确控制 |
@@ -48,6 +49,8 @@ DreamerV3 (2023, latent WM + RL, 奠基)
     │
     ├── FLARE (2025, latent alignment + VLA DiT)
     │       └── GR00T N1.5 (2025, FLARE 集成到工业级模型)
+    │
+    ├── Being-H0.7 (2026, prior/posterior latent query alignment, 200K小时ego视频)
     │
     ├── VidMan (2024, video diffusion → implicit dynamics distillation)
     │

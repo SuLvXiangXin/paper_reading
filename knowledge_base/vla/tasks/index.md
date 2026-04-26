@@ -31,9 +31,15 @@
 
 ## 人形机器人 Loco-Manipulation 🆕
 全身移动、双臂操作、躯干/腿部平衡和手部操作耦合的任务，是 VLA 与 whole-body control 的交叉方向。
-- 代表工作：EgoHumanoid（Unitree G1）、Figure Helix 02（官方技术页）、Being-H0.5/H0.7（多具身/latent WAM）
+- 代表工作：EgoHumanoid（Unitree G1）、Figure Helix 02（官方技术页）、Being-0（FM + VLM Connector + modular skills）、Being-H0.5/H0.7（多具身/latent WAM）
 - 典型任务：Pillow Placement、Trash Disposal、Toy Transfer、Cart Stowing、洗碗机整理、物流包裹处理
 - 挑战：人类 ego 示范和机器人全身动作接口差异大，需要 view alignment、action alignment、底层 whole-body controller 或系统分层
+
+## 人体运动生成 / Motion Prior 🆕
+这类任务不是机器人闭环控制，但为 humanoid VLA 和 whole-body control 提供高层运动先验。
+- 代表工作：Being-M0（MotionLib/MotionBook，大规模 text-to-motion scaling）、Being-M0.5（HuMo100M + PRQ，实时可控 vision-language-motion）
+- 用途：生成全身动作草图、提供 imitation teacher、扩展 motion 数据、作为 planner 到 whole-body controller 之间的 motion layer
+- 挑战：SMPL/HuMo motion 需要 retargeting 到机器人，且缺少接触力、动力学稳定性和环境反馈
 
 ## Egocentric Hand Motion / Perception 🆕
 这类任务不是机器人策略评测本身，但为 human data pretraining 提供关键中间监督。

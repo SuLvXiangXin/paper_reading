@@ -74,61 +74,20 @@ knowledge_base/
 
 ## 二、Agent 设计
 
-### 技术方案：Claude API + Tool Use
-
-Agent 拥有 3 个工具：
-
-```python
-tools = [
-    {
-        "name": "read_knowledge",
-        "description": "读取知识库中的某个文件",
-        "input_schema": {
-            "properties": {
-                "path": {"type": "string", "description": "知识库内的相对路径，如 methods/vlm_diffusion_head.md"}
-            }
-        }
-    },
-    {
-        "name": "update_knowledge",
-        "description": "更新或创建知识库文件",
-        "input_schema": {
-            "properties": {
-                "path": {"type": "string"},
-                "content": {"type": "string"}
-            }
-        }
-    },
-    {
-        "name": "search_papers",
-        "description": "在已有论文卡片中搜索关键词",
-        "input_schema": {
-            "properties": {
-                "query": {"type": "string"}
-            }
-        }
-    }
-]
-```
+### 技术方案：本地 Codex CLI
 
 ### 调用流程
 
 ```python
-# 核心循环
-while True:
-    response = client.messages.create(
-        model="claude-sonnet-4-6",    # 日常用 Sonnet（便宜快）
-        system=SYSTEM_PROMPT,          # 包含角色定义和知识库使用规则
-        messages=messages,
-        tools=tools
-    )
-
-    if response.stop_reason == "tool_use":
-        tool_result = execute_tool(response)
-        messages.append(tool_result)
-    else:
-        break  # Agent 完成，输出最终结果
+# 核心调用
+codex exec \
+  -s workspace-write \
+  -C <repo> \
+  --output-last-message <tmpfile> \
+  -
 ```
+
+`ask` 使用 read-only sandbox；`read` / `report` 使用 workspace-write sandbox，并在 prompt 中限制只更新对应领域的 Markdown 知识库。
 
 ### 模型选择策略
 
@@ -243,15 +202,15 @@ python paper_reader.py ask "action chunking 和 diffusion policy 的区别"
 
 | 阶段 | 内容 | 预计工作量 |
 |------|------|-----------|
-| **P0** | 知识库目录结构 + 手动填充几篇核心论文 | 先用 Claude Code 手动跑 |
-| **P1** | Agent 核心脚本（PDF 读取 + Tool Use 循环） | ~200 行 Python |
+| **P0** | 知识库目录结构 + 手动填充几篇核心论文 | 先用 Codex 手动跑 |
+| **P1** | Agent 核心脚本（PDF 读取 + Codex CLI 调用） | ~200 行 Python |
 | **P2** | 飞书同步模块 | ~100 行 Python |
 | **P3** | 批量处理 + CLI 界面 | ~100 行 Python |
 | **P4** | 知识库自动聚类和演进分析 | 进阶功能 |
 
 ### 建议执行顺序
 
-1. 先用 Claude Code 手动分析 5-10 篇核心论文，验证知识库结构
+1. 先用 Codex 手动分析 5-10 篇核心论文，验证知识库结构
 2. 结构稳定后写 P1 Agent 脚本
 3. 加上飞书同步
 4. 最后做批量和 CLI
