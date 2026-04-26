@@ -168,7 +168,7 @@ xxx
 - arXiv PDFs are downloaded to `pdf_cache/`.
 - PDF extraction uses PyMuPDF, up to 30 pages and about 80K characters.
 - Tool paths inside the agent are relative to the active domain directory, for example `papers/pi0_2024.md` maps to `knowledge_base/vla/papers/pi0_2024.md`.
-- The agent tools are `read_knowledge`, `update_knowledge`, `search_papers`, and `list_knowledge`.
+- The agent runs through local `codex exec`; repository reads/searches/writes are done by the Codex CLI in the selected sandbox.
 - `read` currently calls `_git_push()` after analysis unless `--no-sync` is used. It does not directly call `feishu_sync.py`.
 - GitHub Pages deployment is triggered by pushing changes to `knowledge_base/**`, `mkdocs.yml`, or the deploy workflow on branch `master`.
 - Feishu sync is incremental via MD5 hashes stored in `.feishu_sync_state.json`.
