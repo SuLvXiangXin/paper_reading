@@ -24,6 +24,33 @@ export type SearchResult = {
   score: number;
 };
 
+export type PaperTag = {
+  facet: string;
+  label: string;
+  key: string;
+};
+
+export type PaperTagOption = PaperTag & {
+  count: number;
+};
+
+export type PaperTagFacet = {
+  facet: string;
+  label: string;
+  tags: PaperTagOption[];
+};
+
+export type PaperListItem = {
+  path: string;
+  domain: string;
+  title: string;
+  year: string | null;
+  summary: string;
+  method: string | null;
+  tags: PaperTag[];
+  updated_at: number;
+};
+
 export type ContextDocument = {
   path: string;
   role: string;
@@ -112,6 +139,18 @@ export const api = {
     if (domain) params.set("domain", domain);
     return request<{ results: SearchResult[] }>(`/api/search?${params.toString()}`);
   },
+  papers: (params: { domain?: string; query?: string; tags?: string[] }) => {
+    const searchParams = new URLSearchParams();
+    if (params.domain) searchParams.set("domain", params.domain);
+    if (params.query) searchParams.set("q", params.query);
+    params.tags?.forEach((tag) => searchParams.append("tags", tag));
+    return request<{ papers: PaperListItem[] }>(`/api/papers?${searchParams.toString()}`);
+  },
+  paperTags: (domain?: string) => {
+    const params = new URLSearchParams();
+    if (domain) params.set("domain", domain);
+    return request<{ facets: PaperTagFacet[] }>(`/api/paper-tags?${params.toString()}`);
+  },
   home: (domain: string) => request<HomeResponse>(`/api/home?domain=${encodeURIComponent(domain)}`),
   conversation: (scope: string, domain: string, pagePath?: string) => {
     const params = new URLSearchParams({ scope, domain });
@@ -150,6 +189,15 @@ type StreamHandlers = {
   onDone?: () => void;
   onError?: (error: Error) => void;
 };
+
+function streamErrorMessage(data: unknown): string {
+  if (typeof data === "string" && data.trim()) return data;
+  if (typeof data === "object" && data && "message" in data) {
+    const message = (data as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "stream error";
+}
 
 function parseSsePacket(packet: string): { event: string; data: string } | null {
   const lines = packet.split(/\r?\n/);
@@ -197,6 +245,10 @@ export async function streamChat(
         if (!parsed) continue;
         const data = decodeData(parsed.data);
         handlers.onEvent?.(parsed.event, data);
+        if (parsed.event === "error") {
+          handlers.onError?.(new Error(streamErrorMessage(data)));
+          return;
+        }
         if (parsed.event === "chunk" && typeof data === "object" && data && "text" in data) {
           handlers.onChunk?.(String((data as { text: string }).text));
         }
@@ -226,6 +278,10 @@ export async function streamJob(jobId: string, handlers: StreamHandlers) {
         if (!parsed) continue;
         const data = decodeData(parsed.data);
         handlers.onEvent?.(parsed.event, data);
+        if (parsed.event === "error") {
+          handlers.onError?.(new Error(streamErrorMessage(data)));
+          return;
+        }
         if (parsed.event === "chunk") handlers.onChunk?.(typeof data === "string" ? data : JSON.stringify(data));
         if (parsed.event === "done") handlers.onDone?.();
       }

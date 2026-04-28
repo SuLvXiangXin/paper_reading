@@ -29,6 +29,33 @@ class SearchResult(BaseModel):
     score: int
 
 
+class PaperTag(BaseModel):
+    facet: str
+    label: str
+    key: str
+
+
+class PaperTagOption(PaperTag):
+    count: int
+
+
+class PaperTagFacet(BaseModel):
+    facet: str
+    label: str
+    tags: list[PaperTagOption]
+
+
+class PaperListItem(BaseModel):
+    path: str
+    domain: str
+    title: str
+    year: str | None = None
+    summary: str
+    method: str | None = None
+    tags: list[PaperTag] = Field(default_factory=list)
+    updated_at: float
+
+
 class ContextDocument(BaseModel):
     path: str
     role: str

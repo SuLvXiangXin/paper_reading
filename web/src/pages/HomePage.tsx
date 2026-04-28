@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { HomeResponse, Job } from "../api/client";
 import JobConsole from "../components/JobConsole";
+import PaperFilter from "../components/PaperFilter";
 
 type Props = {
   domain: string;
@@ -169,6 +170,8 @@ export default function HomePage({ domain, onNavigate }: Props) {
         )}
         {error && <div className="error-note">{error}</div>}
       </section>
+
+      <PaperFilter domain={domain} onNavigate={onNavigate} />
 
       <div className="home-grid">
         <section className="list-panel">

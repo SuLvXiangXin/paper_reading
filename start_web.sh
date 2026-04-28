@@ -12,6 +12,16 @@ LOG_FILE="$LOG_DIR/paper_reader_web_${PORT}.log"
 
 mkdir -p "$LOG_DIR"
 
+proxy_exports() {
+  local var value exports=""
+  for var in http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY no_proxy NO_PROXY; do
+    value="${!var:-}"
+    [[ -z "$value" ]] && continue
+    exports+="export ${var}=$(printf '%q' "$value"); "
+  done
+  printf '%s' "$exports"
+}
+
 need_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "缺少命令: $1" >&2
@@ -53,6 +63,21 @@ kill_existing_app_processes() {
     [[ "$pid" == "$current_pid" ]] && continue
     if [[ "$args" == *"paper_reader_web"* ]]; then
       echo "停止遗留 paper_reader_web 进程: pid=$pid"
+      kill "$pid" 2>/dev/null || true
+    fi
+  done < <(ps -eo pid=,args=)
+
+  sleep 0.6
+}
+
+kill_orphan_codex_processes() {
+  local current_pid="$$"
+  local pid args
+  while read -r pid args; do
+    [[ -z "${pid:-}" ]] && continue
+    [[ "$pid" == "$current_pid" ]] && continue
+    if [[ "$args" == *"$REPO_DIR"* && "$args" == *"paper-reader-codex-"* ]]; then
+      echo "停止遗留 paper-reader codex 进程: pid=$pid"
       kill "$pid" 2>/dev/null || true
     fi
   done < <(ps -eo pid=,args=)
@@ -108,11 +133,13 @@ cd "$REPO_DIR"
 
 kill_tmux_session
 kill_existing_app_processes
+kill_orphan_codex_processes
 kill_old_app_on_port
 
 : > "$LOG_FILE"
 
-CMD="cd '$REPO_DIR' && conda run -n '$CONDA_ENV' python -m paper_reader_web --host '$HOST' --port '$PORT' 2>&1 | tee -a '$LOG_FILE'"
+PROXY_EXPORTS="$(proxy_exports)"
+CMD="cd '$REPO_DIR' && ${PROXY_EXPORTS}conda run -n '$CONDA_ENV' python -m paper_reader_web --host '$HOST' --port '$PORT' 2>&1 | tee -a '$LOG_FILE'"
 tmux new-session -d -s "$SESSION_NAME" -c "$REPO_DIR" "$CMD"
 
 wait_until_ready

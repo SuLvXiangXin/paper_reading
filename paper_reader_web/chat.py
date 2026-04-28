@@ -7,10 +7,24 @@ from typing import Any, Iterable
 from codex_runner import codex_available, run_codex_cli
 
 from . import db
-from .config import BASE_DIR, CODEX_MODEL, CODEX_TIMEOUT_SECONDS
+from .config import BASE_DIR, WEB_CODEX_MODEL, WEB_CODEX_REASONING_EFFORT, WEB_CODEX_TIMEOUT_SECONDS
 from .context import prepare_context
 from .schemas import ChatRequest, ContextBundle
 from .security import safe_read_text
+
+
+DOC_PROMPT_LIMITS = {
+    "current_page": 7000,
+    "current_paper": 7000,
+    "domain_overview": 1400,
+    "papers_index": 1400,
+    "explicit_link": 1000,
+    "method_line": 1800,
+    "component": 1200,
+    "task": 800,
+    "benchmark": 1000,
+    "neighbor_paper": 1200,
+}
 
 
 def _sse(event: str, data: Any) -> str:
@@ -26,11 +40,47 @@ def provider_ready() -> bool:
     return codex_available()
 
 
+def _trim_text(text: str, limit: int) -> str:
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 18)].rstrip() + "\n\n[truncated]"
+
+
+def _provided_context(bundle: ContextBundle) -> str:
+    blocks: list[str] = []
+    for doc in bundle.documents:
+        limit = DOC_PROMPT_LIMITS.get(doc.role, 900)
+        try:
+            content = safe_read_text(doc.path)
+        except Exception:
+            continue
+        blocks.append(
+            "\n".join(
+                [
+                    f"### {doc.role}: knowledge_base/{doc.path}",
+                    f"Title: {doc.title}",
+                    "```markdown",
+                    _trim_text(content, limit),
+                    "```",
+                ]
+            )
+        )
+    if bundle.snippets:
+        snippet_lines = ["### related_snippets"]
+        for snip in bundle.snippets[:6]:
+            snippet_lines.append(
+                f"- knowledge_base/{snip.path} ({snip.role}, {snip.title}): {_trim_text(snip.snippet, 420)}"
+            )
+        blocks.append("\n".join(snippet_lines))
+    return "\n\n".join(blocks) or "No inline context available."
+
+
 def _system_prompt(bundle: ContextBundle, mode: str) -> str:
     context_lines = "\n".join(
         f"- knowledge_base/{doc.path} ({doc.role}, {doc.title}, {doc.size} chars)" for doc in bundle.documents
     )
-    snippet_lines = "\n".join(f"- knowledge_base/{snip.path} ({snip.role}): {snip.snippet}" for snip in bundle.snippets)
+    provided_context = _provided_context(bundle)
     action_rule = (
         "This is read-only page QA. Do not write files or claim that files were modified."
         if mode != "action"
@@ -49,12 +99,13 @@ Context hash: {bundle.hash}
 Available context manifest:
 {context_lines or "- none"}
 
-Related snippets:
-{snippet_lines or "- none"}
+Provided document contents and excerpts:
+{provided_context}
 
 Rules:
-- First read the current page when the answer depends on its details.
-- For comparisons, read the relevant method/paper/report paths from the manifest or search the repository.
+- Use the provided current page and excerpts first. For most page QA, answer directly from them.
+- Only inspect additional repository files if the provided context is clearly insufficient.
+- For comparisons, prefer the supplied related paper/method excerpts before doing new search.
 - {action_rule}
 - If the knowledge base is insufficient, say what is missing instead of inventing details.
 """
@@ -127,8 +178,9 @@ Return only the assistant answer. Do not include tool logs or execution traces.
         prompt,
         cwd=BASE_DIR,
         sandbox="read-only",
-        model=CODEX_MODEL or None,
-        timeout=CODEX_TIMEOUT_SECONDS,
+        model=WEB_CODEX_MODEL or None,
+        reasoning_effort=WEB_CODEX_REASONING_EFFORT or None,
+        timeout=WEB_CODEX_TIMEOUT_SECONDS,
     )
     return answer.strip() or "Codex CLI 没有返回文本。", []
 
@@ -142,12 +194,22 @@ def chat_stream(request: ChatRequest) -> Iterable[str]:
     page_path = request.page_path or conversation.page_path
     if not page_path:
         page_path = f"{conversation.domain or 'vla'}/index.md"
+    yield _sse("status", {"message": "正在准备知识库上下文..."})
     bundle = prepare_context(page_path)
     user_message = db.add_message(request.conversation_id, "user", request.message)
     db.touch_conversation(request.conversation_id, context_hash=bundle.hash)
 
     yield _sse("meta", {"context_hash": bundle.hash, "documents": [doc.model_dump() for doc in bundle.documents]})
-    yield _sse("status", {"message": "thinking"})
+    effort = WEB_CODEX_REASONING_EFFORT or "default"
+    yield _sse(
+        "status",
+        {
+            "message": (
+                f"已准备 {len(bundle.documents)} 份上下文，正在调用本地 Codex CLI "
+                f"（reasoning: {effort}, timeout: {WEB_CODEX_TIMEOUT_SECONDS}s）..."
+            )
+        },
+    )
     try:
         answer, tool_events = run_chat(request, bundle, exclude_history_message_id=user_message.id)
     except Exception as exc:

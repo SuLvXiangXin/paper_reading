@@ -5,7 +5,7 @@
 This repository is a paper-reading knowledge base and automation tool. The core workflow is:
 
 ```text
-PDF/arXiv paper -> extract text -> agent reads domain knowledge progressively -> update Markdown knowledge base -> git push -> GitHub Pages deploy
+PDF/arXiv paper -> extract text -> agent reads domain knowledge progressively -> update Markdown knowledge base -> optional git push
 ```
 
 The goal is not to produce isolated summaries. Each new paper should be positioned inside the existing domain map: method line, task type, technical components, benchmarks, related papers, and research trend.
@@ -13,10 +13,9 @@ The goal is not to produce isolated summaries. Each new paper should be position
 ## Important Files
 
 - `paper_reader.py`: main CLI and local Codex CLI agent.
-- `feishu_sync.py`: local Markdown <-> Feishu wiki sync.
-- `README.md`: planning document and high-level design.
-- `mkdocs.yml`: MkDocs Material configuration. `knowledge_base/` is the docs root.
-- `.github/workflows/deploy.yml`: deploys MkDocs to GitHub Pages on pushes to `master`.
+- `paper_reader_web/`: FastAPI backend for the local web UI.
+- `start_web.sh`: starts the local web service in tmux.
+- `README.md`: current usage guide.
 - `knowledge_base/`: source of truth for all domain knowledge.
 - `pdf_cache/`: cached downloaded arXiv PDFs.
 
@@ -61,7 +60,6 @@ The agent reads these environment variables:
 
 - `PAPER_READER_CODEX_MODEL` optional; if unset, the local Codex CLI default model/profile is used.
 - `PAPER_READER_CODEX_TIMEOUT_SECONDS` optional timeout for Codex CLI calls.
-- `FEISHU_APP_SECRET` for Feishu sync.
 
 ## Common Commands
 
@@ -103,16 +101,10 @@ Generate a Mermaid paper graph:
 conda run -n paper_reader python paper_reader.py graph --domain vla
 ```
 
-Sync Markdown to Feishu:
+Start the local web app:
 
 ```bash
-conda run -n paper_reader python feishu_sync.py --domain vla
-```
-
-Pull from Feishu with conflict checks:
-
-```bash
-conda run -n paper_reader python feishu_sync.py pull --domain vla
+./start_web.sh
 ```
 
 ## Paper Learning Workflow
@@ -138,6 +130,16 @@ Use the paper card format expected by `paper_reader.py`:
 - 作者: xxx
 - 机构: xxx
 - arXiv: xxxx.xxxxx
+
+## 标签
+- domain: vla
+- method_tags: [xxx]
+- task_tags: [xxx]
+- component_tags: [xxx]
+- benchmark_tags: [xxx]
+- data_tags: [xxx]
+- robot_tags: [xxx]
+- application_tags: [xxx]
 
 ## 一句话总结
 xxx
@@ -169,10 +171,8 @@ xxx
 - PDF extraction uses PyMuPDF, up to 30 pages and about 80K characters.
 - Tool paths inside the agent are relative to the active domain directory, for example `papers/pi0_2024.md` maps to `knowledge_base/vla/papers/pi0_2024.md`.
 - The agent runs through local `codex exec`; repository reads/searches/writes are done by the Codex CLI in the selected sandbox.
-- `read` currently calls `_git_push()` after analysis unless `--no-sync` is used. It does not directly call `feishu_sync.py`.
-- GitHub Pages deployment is triggered by pushing changes to `knowledge_base/**`, `mkdocs.yml`, or the deploy workflow on branch `master`.
-- Feishu sync is incremental via MD5 hashes stored in `.feishu_sync_state.json`.
-- Do not manually edit `.feishu_sync_state.json` unless explicitly repairing sync state.
+- `read` currently calls `_git_push()` after analysis unless `--no-sync` is used.
+- New paper cards should include `## 标签`; prefer tag names from `knowledge_base/<domain>/tags/index.md` when present, otherwise reuse existing method/task/component/benchmark taxonomy wording.
 
 ## Editing Guidelines
 
@@ -186,7 +186,7 @@ xxx
 
 ## Network Notes
 
-- Direct access is expected for the local Codex CLI backend, Feishu API, arXiv, and Semantic Scholar.
+- Direct access is expected for the local Codex CLI backend, arXiv, and Semantic Scholar.
 - Brave Search MCP may require the configured Clash proxy.
 - Current proxy endpoint is `127.0.0.1:16068` for HTTP/SOCKS5.
 - Do not set a global `https_proxy` by default because it may break domestic services used by this repo.
@@ -196,13 +196,7 @@ xxx
 For code changes:
 
 ```bash
-python -m py_compile paper_reader.py feishu_sync.py
-```
-
-For docs/site changes:
-
-```bash
-mkdocs build
+python -m py_compile paper_reader.py codex_runner.py paper_reader_web/*.py
 ```
 
 For a quick repository check:

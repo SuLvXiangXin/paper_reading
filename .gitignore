@@ -1,12 +1,9 @@
 pdf_cache/
 __pycache__/
 *.pyc
-.feishu_sync_state.json
 .paper_reader_web/
 *.pdf
 .DS_Store
-site/
-.mcp.json
 .codex
 logs
 output/

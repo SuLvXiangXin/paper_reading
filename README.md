@@ -1,237 +1,128 @@
-# Paper Reader — 论文速读工具规划
+# Paper Reader
 
-## 目标
+本仓库现在是一个以 `knowledge_base/` 为核心的数据仓库，外加两套使用入口：
 
-用最少的时间抓住每篇论文的核心内容，构建可积累的领域知识库。
+- `paper_reader.py`：命令行论文处理与知识库问答
+- `paper_reader_web/` + `start_web.sh`：本地 Web 阅读与侧边栏 Codex 问答
 
----
+## 当前功能
 
-## 整体架构
+- 读取 arXiv ID、arXiv URL 或本地 PDF
+- 基于现有领域知识库生成/更新论文卡片
+- 按领域做问答、survey、report、graph
+- 在本地 Web 中浏览知识库并对单页发起 Codex 问答
 
-```
-PDF论文 → Agent 分析（渐进式加载知识库）→ 写入 Markdown → 同步到飞书 → 手机/电脑查看
-```
+## 目录
 
----
-
-## 一、知识库设计（本地 Markdown，层级结构）
-
-```
-knowledge_base/
-├── index.md                    # L0: 领域总览（500字以内）
-│
-├── methods/                    # 方法分类
-│   ├── index.md                # L1: 方法分类概览
-│   ├── vlm_action_token.md     # L2: VLM 直接输出动作（RT-2, OpenVLA）
-│   ├── vlm_diffusion_head.md   # L2: VLM + 扩散/flow head（π₀, RDT）
-│   ├── reward_learning.md      # L2: 奖励学习路线
-│   └── world_model.md          # L2: 世界模型路线
-│
-├── tasks/                      # 任务类型
-│   ├── index.md                # L1: 任务类型概览
-│   ├── manipulation.md         # L2: 抓取/操作
-│   ├── navigation.md           # L2: 导航
-│   └── dexterous.md            # L2: 灵巧手
-│
-├── components/                 # 通用技术组件
-│   ├── index.md                # L1: 技术组件概览
-│   ├── action_repr.md          # L2: 动作表示（chunk, discrete, continuous）
-│   ├── vision_encoder.md       # L2: 视觉编码器
-│   └── data_strategy.md        # L2: 数据策略（co-training, augmentation）
-│
-├── benchmarks/                 # 评测体系
-│   ├── index.md                # L1: 评测概览
-│   └── ...
-│
-└── papers/                     # 论文卡片
-    ├── index.md                # 论文清单 + 一句话总结
-    ├── pi0_2024.md
-    ├── rt2_2023.md
-    └── ...
-```
-
-### 层级原则
-
-| 层级 | 内容 | 长度 | 加载时机 |
-|------|------|------|----------|
-| L0 `index.md` | 整个领域的地图 | ~500 字 | 每次都加载 |
-| L1 子目录 `index.md` | 某方向的脉络和演进 | ~1000 字 | Agent 判断相关时加载 |
-| L2 具体主题 | 技术细节、对比 | ~2000 字 | 需要深入分析时加载 |
-| 论文卡片 | 单篇论文结构化信息 | ~300 字 | 需要对比时加载 |
-
-### 渐进式加载逻辑
-
-```
-用户给一篇新论文
-  → Agent 先读 L0 index.md（了解领域全貌）
-  → 读论文 abstract，判断属于哪个方向
-  → 加载对应的 L1 index
-  → 需要细节对比时再加载 L2
-  → 生成论文卡片 + 更新知识库
-```
-
----
-
-## 二、Agent 设计
-
-### 技术方案：本地 Codex CLI
-
-### 调用流程
-
-```python
-# 核心调用
-codex exec \
-  -s workspace-write \
-  -C <repo> \
-  --output-last-message <tmpfile> \
-  -
-```
-
-`ask` 使用 read-only sandbox；`read` / `report` 使用 workspace-write sandbox，并在 prompt 中限制只更新对应领域的 Markdown 知识库。
-
-### 模型选择策略
-
-默认不在项目代码里绑定具体模型，直接使用本机 Codex CLI 的当前默认配置。需要覆盖时设置 `PAPER_READER_CODEX_MODEL`，由 `codex exec -m <model>` 传给本地 CLI。
-
-| 场景 | 配置方式 | 理由 |
-|------|----------|------|
-| 日常论文速读 | 使用 Codex CLI 默认模型 | 避免项目内硬编码 provider/model |
-| 深度分析/对比 | 临时设置 `PAPER_READER_CODEX_MODEL` | 按本机 Codex 配置选择更强模型 |
-| 批量处理摘要 | 使用默认模型或较快模型配置 | 由本地 CLI 统一管理模型策略 |
-
----
-
-## 三、论文卡片模板
-
-每篇论文生成一个结构化卡片：
-
-```markdown
-# 论文名 (年份)
-
-## 基本信息
-- 作者：xxx
-- 机构：xxx
-- 链接：arXiv:xxxx.xxxxx
-
-## 一句话总结
-xxx
-
-## 问题
-解决什么问题？
-
-## 方法
-- 方法线归属：VLM + Diffusion Head / VLM Action Token / ...
-- 核心 idea：1-2 句话
-- 关键技术点：
-
-## 实验
-- Benchmark：xxx
-- 主要结果：xxx
-- 对比基线：xxx
-
-## 评价
-- 优势：
-- 局限：
-- 对我们的启发：
-```
-
----
-
-## 四、展示层：飞书同步
-
-### 同步方式
-
-Agent 每分析完一篇论文 → 调用飞书 API → 自动创建/更新文档
-
-### 飞书文档结构（与知识库目录对应）
-
-```
-飞书知识库/
-├── VLA 领域总览
-├── 方法分类/
-│   ├── VLM 直接输出动作
-│   ├── VLM + 扩散头
-│   └── ...
-├── 论文卡片/
-│   ├── π₀ (2024)
-│   ├── RT-2 (2023)
-│   └── ...
-└── 阅读清单
-```
-
-### 需要实现的飞书 API 调用
-
-1. 创建文档：`POST /open-apis/docx/v1/documents`
-2. 更新内容：`PATCH /open-apis/docx/v1/documents/:document_id/blocks`
-3. Markdown → 飞书 Block 格式转换
-
-### 飞书 API 准备工作
-
-- [ ] 创建飞书应用（开发者后台）
-- [ ] 获取 App ID 和 App Secret
-- [ ] 开通文档权限（docx:document:write）
-- [ ] 创建目标知识库空间
-
----
-
-## 五、使用流程
-
-### 单篇论文速读
-
-```bash
-python paper_reader.py read paper.pdf
-# 或
-python paper_reader.py read https://arxiv.org/abs/xxxx.xxxxx
-```
-
-输出：论文卡片（终端显示 + 写入知识库 + 同步飞书）
-
-### 批量处理
-
-```bash
-python paper_reader.py batch papers/  # 处理整个文件夹的 PDF
-```
-
-### 知识库查询
-
-```bash
-python paper_reader.py ask "action chunking 和 diffusion policy 的区别"
-```
-
----
-
-## 六、实现优先级
-
-| 阶段 | 内容 | 预计工作量 |
-|------|------|-----------|
-| **P0** | 知识库目录结构 + 手动填充几篇核心论文 | 先用 Codex 手动跑 |
-| **P1** | Agent 核心脚本（PDF 读取 + Codex CLI 调用） | ~200 行 Python |
-| **P2** | 飞书同步模块 | ~100 行 Python |
-| **P3** | 批量处理 + CLI 界面 | ~100 行 Python |
-| **P4** | 知识库自动聚类和演进分析 | 进阶功能 |
-
-### 建议执行顺序
-
-1. 先用 Codex 手动分析 5-10 篇核心论文，验证知识库结构
-2. 结构稳定后写 P1 Agent 脚本
-3. 加上飞书同步
-4. 最后做批量和 CLI
-
----
-
-## 七、目录结构（本仓库）
-
-```
+```text
 paper_reader/
-├── README.md              # 本文件：整体规划
-├── paper_reader.py        # 主脚本（待实现）
-├── feishu_sync.py         # 飞书同步模块（待实现）
-├── config.yaml            # 配置（API key、飞书凭证、知识库路径等）
-└── knowledge_base/        # 知识库（核心数据）
-    ├── index.md
-    ├── methods/
-    ├── tasks/
-    ├── components/
-    ├── benchmarks/
-    └── papers/
+├── paper_reader.py
+├── codex_runner.py
+├── paper_reader_web/
+├── start_web.sh
+├── knowledge_base/
+├── pdf_cache/
+└── web/
+```
+
+## 环境
+
+推荐使用 `paper_reader` conda 环境：
+
+```bash
+conda run -n paper_reader python paper_reader.py --help
+```
+
+运行依赖：
+
+- 本地 `codex` CLI
+- `pymupdf`
+- `requests`
+
+常用环境变量：
+
+- `PAPER_READER_CODEX_MODEL`
+- `PAPER_READER_CODEX_TIMEOUT_SECONDS`
+- `PAPER_READER_WEB_CODEX_MODEL`
+- `PAPER_READER_WEB_CODEX_REASONING_EFFORT`
+- `PAPER_READER_WEB_CODEX_TIMEOUT_SECONDS`
+- `PAPER_READER_WEB_PORT`
+
+如果本机访问 Codex 或 Brave Search 依赖代理，先在启动 shell 中设置好 `http_proxy` / `https_proxy`，`start_web.sh` 会把它们传给 Web 服务。
+
+## CLI 用法
+
+分析单篇论文：
+
+```bash
+conda run -n paper_reader python paper_reader.py read 2504.16054 --domain vla
+conda run -n paper_reader python paper_reader.py read https://arxiv.org/abs/2504.16054 --domain vla
+conda run -n paper_reader python paper_reader.py read /path/to/paper.pdf --domain vla
+```
+
+跳过自动 `git push`：
+
+```bash
+conda run -n paper_reader python paper_reader.py read 2504.16054 --domain vla --no-sync
+```
+
+知识库问答：
+
+```bash
+conda run -n paper_reader python paper_reader.py ask "action chunking 和 diffusion policy 的区别" --domain vla
+```
+
+交叉调研：
+
+```bash
+conda run -n paper_reader python paper_reader.py survey 2504.16054 2410.24164 --name vla_survey --domain vla
+conda run -n paper_reader python paper_reader.py report "VLA RL 后训练路线对比" --domain vla
+conda run -n paper_reader python paper_reader.py graph --domain vla
+```
+
+## Web 用法
+
+启动服务：
+
+```bash
+./start_web.sh
+```
+
+启动后会打印本地地址和 notebook 代理地址。Web 端支持：
+
+- 左侧知识库树浏览
+- 主页搜索与论文筛选
+- 文档页 Markdown 阅读
+- 右侧 Codex 侧边栏问答
+
+## 知识库约定
+
+`knowledge_base/<domain>/` 下通常包含：
+
+- `index.md`
+- `papers/`
+- `methods/`
+- `components/`
+- `tasks/`
+- `benchmarks/`
+- `reports/`
+
+新增论文时，优先更新：
+
+1. `papers/<paper>.md`
+2. `papers/index.md`
+3. 必要时更新对应方法线 / 组件 / benchmark / report
+
+## 验证
+
+代码检查：
+
+```bash
+python -m py_compile paper_reader.py codex_runner.py paper_reader_web/*.py
+```
+
+快速查看仓库状态：
+
+```bash
+git status --short
 ```

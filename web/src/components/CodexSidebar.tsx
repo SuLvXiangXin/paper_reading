@@ -34,6 +34,7 @@ export default function CodexSidebar({ domain, pagePath, context }: Props) {
   const [preparedContext, setPreparedContext] = useState<ContextBundle | null>(null);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -70,6 +71,7 @@ export default function CodexSidebar({ domain, pagePath, context }: Props) {
   const send = async (text: string) => {
     if (!conversation || !text.trim() || streaming) return;
     setError("");
+    setStatusText("正在准备上下文...");
     setStreaming(true);
     const userMessage: Message = {
       id: Date.now(),
@@ -101,13 +103,26 @@ export default function CodexSidebar({ domain, pagePath, context }: Props) {
         mode: pagePath ? "page_qa" : "home"
       },
       {
+        onEvent(event, data) {
+          if (event !== "status") return;
+          if (typeof data !== "object" || !data || !("message" in data)) return;
+          setStatusText(String((data as { message: unknown }).message));
+        },
         onChunk(chunk) {
+          setStatusText("");
           setMessages((prev) => prev.map((item) => (item.id === assistantId ? { ...item, content: item.content + chunk } : item)));
         },
         onError(err) {
+          setStatusText("");
           setError(err.message);
+          setMessages((prev) =>
+            prev.map((item) =>
+              item.id === assistantId && !item.content ? { ...item, content: `请求失败：${err.message}` } : item
+            )
+          );
         },
         onDone() {
+          setStatusText("");
           setStreaming(false);
         }
       }
@@ -196,7 +211,7 @@ export default function CodexSidebar({ domain, pagePath, context }: Props) {
               {message.content ? (
                 <MessageMarkdown content={message.content} />
               ) : streaming && message.role === "assistant" ? (
-                <span className="thinking-dots">...</span>
+                <span className="thinking-status">{statusText || "正在等待响应..."}</span>
               ) : null}
             </div>
           </div>

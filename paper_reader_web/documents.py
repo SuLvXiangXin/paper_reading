@@ -28,6 +28,8 @@ def infer_page_type(path: str) -> str:
         return "task"
     if len(parts) >= 3 and parts[1] == "benchmarks":
         return "benchmark"
+    if len(parts) >= 3 and parts[1] == "tags":
+        return "tag_taxonomy"
     if parts[-1] == "index.md":
         return "index"
     return "document"

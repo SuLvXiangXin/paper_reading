@@ -15,9 +15,10 @@ from fastapi.staticfiles import StaticFiles
 
 from . import db, jobs
 from .chat import chat_stream, provider_ready
-from .config import BASE_DIR, CODEX_MODEL, DEFAULT_DOMAIN, WEB_DIST_DIR
+from .config import BASE_DIR, DEFAULT_DOMAIN, WEB_CODEX_MODEL, WEB_DIST_DIR
 from .context import prepare_context
 from .documents import build_tree, list_domains, read_document, recent_documents, search_knowledge
+from .paper_tags import list_paper_tag_facets, list_papers
 from .schemas import ChatRequest, MockJobRequest, ReadPaperRequest, ReportRequest, SurveyRequest
 from .security import normalize_kb_path, validate_domain
 
@@ -53,7 +54,7 @@ def _startup() -> None:
 
 @app.get("/api/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "model": CODEX_MODEL or "codex default", "provider_ready": provider_ready(), "repo": str(BASE_DIR)}
+    return {"ok": True, "model": WEB_CODEX_MODEL or "codex default", "provider_ready": provider_ready(), "repo": str(BASE_DIR)}
 
 
 @app.get("/api/domains")
@@ -74,6 +75,16 @@ def document(path: str):
 @app.get("/api/search")
 def search(q: str = Query(..., min_length=1), domain: str | None = None):
     return {"results": search_knowledge(q, domain=domain)}
+
+
+@app.get("/api/papers")
+def papers(domain: str | None = None, q: str | None = None, tags: list[str] = Query(default_factory=list)):
+    return {"papers": list_papers(domain=domain, tag_keys=tags, query=q)}
+
+
+@app.get("/api/paper-tags")
+def paper_tags(domain: str | None = None):
+    return {"facets": list_paper_tag_facets(domain=domain)}
 
 
 @app.get("/api/context/prepare")
@@ -132,7 +143,7 @@ def home(domain: str = DEFAULT_DOMAIN):
         "recent_papers": recent_documents(domain, "papers", limit=8),
         "recent_reports": recent_documents(domain, "reports", limit=5),
         "git_status": status,
-        "model": CODEX_MODEL or "codex default",
+        "model": WEB_CODEX_MODEL or "codex default",
         "provider_ready": provider_ready(),
     }
 

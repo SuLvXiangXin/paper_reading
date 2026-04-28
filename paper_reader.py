@@ -26,10 +26,10 @@ import requests
 
 from codex_runner import run_codex_cli
 
-# ─── Git Push（自动同步到 GitHub Pages） ─────────────────────────────────────
+# ─── Git Push（自动同步到远端仓库） ───────────────────────────────────────────
 
 def _git_push(domain: str = None):
-    """将知识库变更 commit 并 push 到 GitHub，触发 Pages 自动部署。"""
+    """将知识库变更 commit 并 push 到远端 Git 仓库。"""
     import subprocess
     repo_dir = Path(__file__).parent
     try:
@@ -42,14 +42,14 @@ def _git_push(domain: str = None):
             print("  [跳过] 知识库无变更，无需 push")
             return
         print(f"\n{'='*60}")
-        print("自动同步到 GitHub Pages...")
+        print("自动推送到远端仓库...")
         print(f"{'='*60}")
         domain_msg = f" [{domain}]" if domain else ""
         msg = f"Update knowledge base{domain_msg}"
         subprocess.run(["git", "add", "knowledge_base/"], cwd=repo_dir, check=True)
         subprocess.run(["git", "commit", "-m", msg], cwd=repo_dir, check=True)
         subprocess.run(["git", "push", "origin", "master"], cwd=repo_dir, check=True)
-        print("  [完成] 已推送，GitHub Actions 将自动部署")
+        print("  [完成] 已推送到 origin/master")
     except subprocess.CalledProcessError as e:
         print(f"  [警告] git push 失败: {e}")
 
@@ -91,6 +91,16 @@ SYSTEM_PROMPT = """\
 - 机构: xxx
 - arXiv: xxxx.xxxxx
 
+## 标签
+- domain: vla
+- method_tags: [xxx]
+- task_tags: [xxx]
+- component_tags: [xxx]
+- benchmark_tags: [xxx]
+- data_tags: [xxx]
+- robot_tags: [xxx]
+- application_tags: [xxx]
+
 ## 一句话总结
 xxx
 
@@ -120,6 +130,8 @@ xxx
 - 用你对领域的理解来定位这篇论文，而不是泛泛总结
 - 对比已有工作时要具体，说清楚和谁比、有什么不同
 - 如果论文提出了新的重要概念，要更新知识库中的相关文件
+- `## 标签` 必须简洁，优先复用当前领域 `tags/index.md`、`methods/index.md`、`tasks/index.md`、`components/index.md`、`benchmarks/index.md` 里的既有术语
+- 每个 tag facet 只保留最关键的 1-5 个标签；不确定的 facet 可以少填，但不要编造标签
 """
 
 REPORT_SYSTEM_PROMPT = """\
