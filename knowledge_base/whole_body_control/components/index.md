@@ -41,8 +41,15 @@
 
 ### 大规模预训练（Foundation Models）
 - **SONIC** — 运动跟踪作为预训练任务，42M参数，9000 GPU小时
+- **HoloMotion-1** — 2000+小时 video-derived hybrid motion corpus，稀疏 MoE Transformer（400M总参数/7M激活）
 - **GR00T N1** (2503.14734, 550引用) — NVIDIA开源人形基础模型
 - Scaling 三轴：网络规模、数据规模、计算规模
+
+### 序列策略与稀疏专家（Sequence Policy / Sparse MoE）
+当运动数据来自长序列和异构来源时，显式时间建模比固定历史 MLP 更适合吸收风格变化。
+- **HoloMotion-1** — causal Transformer + sparse MoE；router 只依赖 reference motion，降低 sim-to-real 状态误差对专家选择的影响
+- **Sequence-level PPO** — 保留连续 rollout segment，减少 sliding-window PPO 对重叠历史的重复前向
+- **KV-cache inference** — 为实时控制缓存历史 key/value，每步只处理新 token，服务于 50 Hz 机器人闭环
 
 ## 下游任务接口
 - **运动跟踪** → 遥操作 / VLA 指令 / 高层规划

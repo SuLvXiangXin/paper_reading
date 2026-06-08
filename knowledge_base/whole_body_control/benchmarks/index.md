@@ -6,6 +6,8 @@
 |--------|------|------|------|------|
 | AMASS | 2019 | 动作捕捉数据集合（CMU MoCap等合并） | 大规模 | 学术界 |
 | SONIC 数据集 | 2025 | 高质量全身动捕数据 | 100M帧, 700小时 | NVIDIA |
+| MotionMillion | 2025 | 野外单目视频重建人体运动，用于扩大运动多样性 | 百万级/2000+小时用于 HoloMotion | 学术界 |
+| HoloMotion OOD Suite | 2026 | OMOMO, HumanAct12, TWIST2, TikTokDance, InertialTeleop 的零样本跟踪评测 | 约12.5小时 | Horizon Robotics |
 | OmniH2O-6 | 2024 | 六种日常任务全身控制遥操作数据 | - | CMU/NVIDIA |
 | HumanPlus 数据集 | 2024 | 遥操作全站任务数据 | - | Stanford |
 
@@ -13,15 +15,15 @@
 
 | 平台 | 特点 | 常用论文 |
 |------|------|---------|
-| Isaac Gym / Isaac Lab | NVIDIA GPU加速并行RL训练 | HOVER, SONIC, BeyondMimic |
-| MuJoCo | 精确物理，标准RL环境 | PHC, MaskedMimic |
+| Isaac Gym / Isaac Lab | NVIDIA GPU加速并行RL训练 | HOVER, SONIC, BeyondMimic, HoloMotion-1 |
+| MuJoCo | 精确物理，标准RL环境 | PHC, MaskedMimic, HoloMotion-1 |
 | Genesis | 新兴高速仿真平台 | - |
 
 ## 常用机器人平台
 
 | 机器人 | 制造商 | 常用论文 |
 |--------|--------|---------|
-| Unitree H1 / H1-2 / G1 | Unitree | HOVER, BeyondMimic, ASAP |
+| Unitree H1 / H1-2 / G1 | Unitree | HOVER, BeyondMimic, ASAP, SONIC, HoloMotion-1, AMS |
 | Figure 01/02 | Figure AI | - |
 | 1X NEO | 1X Technologies | - |
 | Boston Dynamics Atlas | Boston Dynamics | - |

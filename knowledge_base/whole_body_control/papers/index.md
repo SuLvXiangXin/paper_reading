@@ -1,12 +1,13 @@
 # 论文卡片索引 — Whole-Body Control
 
-> 最后更新：2026-03-17
+> 最后更新：2026-06-01
 
 ## 锚点论文（已有完整卡片）
 
 | 引用数 | arXiv | 文件 | 简介 |
 |-------|-------|------|------|
 | 33 | 2511.07820 | sonic_2025.md | SONIC：运动跟踪Scaling，WBC基础模型 |
+| — | 2605.15336 | holomotion_2026.md | HoloMotion-1：视频重建运动 + 稀疏 MoE Transformer 的零样本全身跟踪基础模型 |
 | 113 | 2410.21229 | hover_2024.md | HOVER：多模式策略蒸馏，通用WBC |
 | 119 | 2508.08241 | beyondmimic_2025.md | BeyondMimic：扩散引导，零样本泛化 |
 | — | 2604.01158 | smash_2026.md | SMASH：onboard ego 感知 + 全身击球 matching 的 humanoid 乒乓 |

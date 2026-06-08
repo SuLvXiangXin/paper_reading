@@ -9,6 +9,7 @@
 |--------|----------|-----------|---------|
 | [三维一致性](methods/3d_consistency.md) | 相机精准渲染、多视角一致性 | 1 | — |
 | [物理合理性](methods/physical_plausibility.md) | 多智能体交互、Actor-场景交互 | — | — |
+| [通用机器人世界模型](methods/robot_world_model.md) | 动作可控仿真、策略评估、模型预测规划 | 2 | ✓ |
 | [长时渲染质量](methods/long_rendering_quality.md) | 长时间序列渲染稳定性，exposure bias / train-test gap | 11 | ✓ |
 | [长时一致性](methods/long_consistency.md) | 场景/角色/逻辑一致性 | 9 | — |
 | [渲染速度](methods/rendering_speed.md) | 实时生成 | 2 | ✓ |
@@ -19,6 +20,7 @@
 
 ## 论文卡片
 - [papers/index.md](papers/index.md) — 全部论文速查表
+- [DreamDojo](papers/dreamdojo_2026.md) — 2026.02，NVIDIA 等，4.4 万小时人类第一视角视频 + 连续 latent action 预训练通用机器人世界模型
 - [1X World Model](papers/1x_world_model_2025.md) — 2025，1X Technologies，首个全身人形机器人视频世界模型，用于策略离线评估（state value预测+真机相关性验证）
 - [Self-Forcing++](papers/self_forcing_plus_plus_2025.md) — 2025.10，UCLA+ByteDance，分钟级高质量视频生成
 - [LongLive](papers/longlive_2025.md) — 2025.09，NVIDIA+MIT+HKUST，实时交互式长视频生成（20.7 FPS，240s，KV-recache）
@@ -36,10 +38,14 @@
 - 2025.09: FantasyWorld 推进 3D 一致性
 - **2025.10: Self-Forcing++ 实现 4 分 15 秒分钟级高质量视频，发现训练预算 scaling law**
 - 2026.01: TeleWorld 4D 世界模型
+- 2026.02: DreamDojo 用 44k 小时人类第一视角视频 + 连续 latent action 推进通用机器人世界模型
 
 ## 关键概念速查
 | 概念 | 定义 | 相关方法 |
 |------|------|---------|
+| 连续 latent action | 从相邻帧中自监督抽取的低维连续动作 embedding，可作为无标注人类视频的统一动作代理标签 | **DreamDojo** |
+| 人类视频预训练 | 用大规模第一视角人类交互视频学习开放世界物体动力学和接触先验，再后训练到目标机器人 | **DreamDojo** |
+| World Model as Evaluator | 用动作条件未来预测评估策略成功率、checkpoint 或架构优劣 | **1XWM**, **DreamDojo** |
 | Exposure Bias | AR 训练用 GT 条件、推理用自生成条件的分布差异 | Self-Forcing 系列 |
 | Distribution Matching Distillation (DMD) | 最小化 student/teacher 输出分布 KL 散度 | CausVid, Self-Forcing, Self-Forcing++, LongLive |
 | Rolling KV Cache | 推理时滑动窗口 KV 缓存，支持流式长视频 | Self-Forcing, Self-Forcing++, LongLive |

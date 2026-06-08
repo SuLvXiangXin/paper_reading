@@ -39,11 +39,12 @@
 | 8 | Geometry Forcing | 2507.07982 | 2025.07 | 24 | MSR+清华 | — |
 | 9 | TeleWorld | 2601.00051 | 2026.01 | 2 | 中国电信 | — |
 
-## 机器人策略评估型世界模型
+## 机器人世界模型 / 策略评估
 
 | # | 论文 | 来源 | 日期 | 机构 | 卡片 |
 |---|------|------|------|------|------|
 | 1 | **1X World Model (1XWM)** | **[PDF](https://www.1x.tech/1x-world-model.pdf)** | **2025** | **1X Technologies** | **[✓](1x_world_model_2025.md)** |
+| 2 | **DreamDojo** | **arXiv:2602.06949** | **2026.02** | **NVIDIA+HKUST+UC Berkeley+UT Austin** | **[✓](dreamdojo_2026.md)** |
 
 ## 三维一致性
 
